@@ -37,27 +37,27 @@ export default async function VendorFleetPage() {
   return (
     <div data-audience="external" className="mx-auto flex max-w-3xl flex-col gap-4 p-4 text-[15px]">
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-ink-900">Կայանների ցանց / Fleet</h1>
+        <h1 className="text-xl font-bold text-ink-900">Fleet / Կայանների ցանց</h1>
         <form action={logoutAction}>
-          <button className="text-sm text-teal-600 underline">Դուրս գալ / Sign out</button>
+          <button className="text-sm text-teal-600 underline">Sign out</button>
         </form>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DataCard layer="measurement" title="Կայաններ / Sites">
+        <DataCard layer="measurement" title="Sites / Կայաններ">
           <p className="numeric text-3xl font-semibold text-ink-900">{fleet.length}</p>
         </DataCard>
-        <DataCard layer="commercial" title="Կոմիսիոն / Commission">
+        <DataCard layer="commercial" title="Commission / Կոմիսիոն">
           <p className="numeric text-3xl font-semibold text-ink-900">
             {totalCommission.toLocaleString("hy-AM")} <span className="text-sm text-ink-500">֏</span>
           </p>
         </DataCard>
       </div>
 
-      <DataCard layer="measurement" title="Մոնիտորինգ / Fleet monitoring">
+      <DataCard layer="measurement" title="Fleet monitoring / Մոնիտորինգ">
         {fleet.length === 0 ? (
           <p className="text-sm text-ink-700">
-            Ձեր տեղադրած կայանները կհայտնվեն այստեղ: / Your installed sites appear here.
+            Your installed sites appear here. / Ձեր տեղադրած կայանները կհայտնվեն այստեղ:
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-ink-200">
@@ -75,11 +75,11 @@ export default async function VendorFleetPage() {
         )}
       </DataCard>
 
-      <DataCard layer="commercial" title="Կոմիսիոն հաշվետվություններ / Commission statements">
+      <DataCard layer="commercial" title="Commission statements / Կոմիսիոն հաշվետվություններ">
         {commissions.length === 0 ? (
           <p className="text-sm text-ink-700">
-            Կոմիսիոն վճարումները հաշվեգրվում են ամեն վաճառված վկայականից: /
-            Commission accrues from every certificate sold from your referred sites.
+            Commission accrues from every certificate sold from your referred
+            sites. / Կոմիսիոն վճարումները հաշվեգրվում են ամեն վաճառված վկայականից:
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-ink-200">
@@ -87,7 +87,7 @@ export default async function VendorFleetPage() {
               <li key={c.id} className="flex items-center justify-between py-2">
                 <span className="numeric">{c.periodLabel}</span>
                 <span className="numeric font-semibold">{Number(c.amountAmd).toLocaleString("hy-AM")} ֏</span>
-                <span className="text-sm text-ink-500">{c.paidAt ? "վճարված / paid" : "հաշվեգրված / accrued"}</span>
+                <span className="text-sm text-ink-500">{c.paidAt ? "paid / վճարված" : "accrued / հաշվեգրված"}</span>
               </li>
             ))}
           </ul>

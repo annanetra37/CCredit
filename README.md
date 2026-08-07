@@ -22,7 +22,10 @@ TimescaleDB · Drizzle (SQL-first) · pg-boss · Tailwind 4 with CSS-variable
 tokens · react-hook-form + Zod · next-intl (hy default, en) · Vitest ·
 pgTAP · Playwright (planned).
 
-One documented deviation from the guide: auth is a direct database-session
+Two documented deviations from the guide. First, the default UI language is
+English (product decision); Armenian remains a complete, first-class locale —
+every UI string, glossary entry and contract template exists in both, and
+users switch with one click. Second, auth is a direct database-session
 implementation rather than Auth.js — same design (revocable DB sessions,
 role-based, expiring auditor accounts) in ~150 auditable lines; the session
 table matches the Auth.js adapter shape so swapping in later touches one file.

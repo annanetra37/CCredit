@@ -64,11 +64,11 @@ export default async function LoginPage({
         </form>
 
         <form action={switchLocaleAction} className="mt-4 flex justify-center gap-2">
-          <button name="locale" value="hy" className="rounded-badge px-3 py-1 text-sm text-teal-600 hover:bg-mist">
-            Հայերեն
-          </button>
           <button name="locale" value="en" className="rounded-badge px-3 py-1 text-sm text-teal-600 hover:bg-mist">
             English
+          </button>
+          <button name="locale" value="hy" className="rounded-badge px-3 py-1 text-sm text-teal-600 hover:bg-mist">
+            Հայերեն
           </button>
         </form>
       </div>

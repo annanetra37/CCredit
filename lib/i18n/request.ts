@@ -5,11 +5,12 @@ export const locales = ["hy", "en"] as const;
 export type Locale = (typeof locales)[number];
 
 /**
- * Armenian is not an afterthought: hy is the default locale. The locale is a
- * cookie rather than a URL segment so a bakery owner never sees /en/ vs /hy/
- * — they just see their language.
+ * English is the default locale (product decision, deviating from the build
+ * guide's Armenian-first stance); Armenian remains a first-class, fully
+ * translated locale one click away. The locale is a cookie rather than a URL
+ * segment so users just see their language, never /en/ vs /hy/.
  */
-export const defaultLocale: Locale = "hy";
+export const defaultLocale: Locale = "en";
 
 export default getRequestConfig(async () => {
   const store = await cookies();
