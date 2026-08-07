@@ -100,6 +100,12 @@ pg_prove -d $DATABASE_URL tests/pgtap/*.sql   # constraint proofs (needs pgtap)
 | Point-in-time reconstruction | bitemporal `valid_from/valid_to` on mutable entities; auditor console `asOf` |
 | Sandbox never reaches a registry | `assertNoSandboxAttributes` throws inside every registry client before any I/O |
 
+## Deployment
+
+Railway config-as-code is included: `railway.json` (web, with pre-deploy
+migrations and `/api/health` healthcheck) and `railway.jobs.json` (pg-boss
+worker). Step-by-step: `docs/DEPLOY_RAILWAY.md`.
+
 ## Documentation
 
 - `docs/USER_GUIDE.md` — how to use the portal, with a plain-English/ELI5

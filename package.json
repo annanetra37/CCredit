@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "Attribute Origination Portal — turns solar electricity readings into saleable certificates (I-RECs and VCUs) with an audit trail that holds.",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

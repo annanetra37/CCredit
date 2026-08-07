@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * group's layout, which returns 403 — never a redirect loop — when the role
  * does not match (S0-2).
  */
-const PUBLIC_PATHS = ["/login", "/glossary", "/design", "/api/webhooks"];
+const PUBLIC_PATHS = ["/login", "/glossary", "/design", "/api/webhooks", "/api/health"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
