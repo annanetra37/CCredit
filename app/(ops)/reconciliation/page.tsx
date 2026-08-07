@@ -43,11 +43,15 @@ export default async function ReconciliationPage({
     if (!latestByPeriod.has(r.periodId)) latestByPeriod.set(r.periodId, r);
   }
 
-  // Exception queue: disputed first, sorted by age (S6-2).
+  // Exception queue (S6-3R): DISPUTED above FLAGGED above the rest,
+  // larger volumes first within a class.
   const sorted = [...periods].sort((a, b) => {
-    const rank = (s: string) => (s === "DISPUTED" ? 0 : s === "OPEN" ? 1 : 2);
+    const flaggedA = latestByPeriod.get(a.period.id)?.flagged ? 0 : 1;
+    const flaggedB = latestByPeriod.get(b.period.id)?.flagged ? 0 : 1;
+    const rank = (s: string, f: number) =>
+      s === "DISPUTED" ? 0 : f === 0 ? 1 : s === "OPEN" || s === "AWAITING_SOURCE" ? 2 : 3;
     return (
-      rank(a.period.status) - rank(b.period.status) ||
+      rank(a.period.status, flaggedA) - rank(b.period.status, flaggedB) ||
       a.period.startsOn.getTime() - b.period.startsOn.getTime()
     );
   });
@@ -81,9 +85,9 @@ export default async function ReconciliationPage({
                 <div className="grid grid-cols-3 gap-3 text-sm">
                   {(
                     [
-                      ["Meter", recon.meterMwh],
-                      ["Inverter", recon.inverterMwh],
-                      ["Utility", recon.utilityMwh],
+                      ["Export (record of account)", recon.exportMwh ?? recon.meterMwh],
+                      ["Generation (inverter)", recon.generationMwh ?? recon.inverterMwh],
+                      ["Self-consumed", recon.selfConsumedMwh],
                     ] as const
                   ).map(([label, v]) => (
                     <div key={label} className="rounded-input bg-surface-2 p-3 text-center">
@@ -94,24 +98,39 @@ export default async function ReconciliationPage({
                     </div>
                   ))}
                   <p className="col-span-3 text-sm text-ink-700">
-                    Max variance:{" "}
-                    <span className="numeric font-semibold">
-                      {recon.maxVariancePct != null ? `${Number(recon.maxVariancePct).toFixed(2)}%` : "n/a"}
-                    </span>{" "}
-                    · tolerance <span className="numeric">{Number(recon.tolerancePct).toFixed(1)}%</span> ·{" "}
-                    adopted:{" "}
+                    Certified figure:{" "}
                     <span className="numeric font-semibold">
                       {recon.adoptedMwh != null ? `${Number(recon.adoptedMwh).toFixed(4)} MWh` : "none"}
                     </span>{" "}
-                    <SourceBadge source="MANUAL" />
+                    {recon.adoptedSource && <SourceBadge source={recon.adoptedSource} />}
+                    {recon.flagged && (
+                      <span className="ml-2 rounded-badge bg-butter px-2 py-0.5 text-xs font-semibold text-amber-700">
+                        ⚑ FLAGGED for review
+                      </span>
+                    )}
                   </p>
+                  {recon.flagged && recon.flagReasons && recon.flagReasons.length > 0 && (
+                    <ul className="col-span-3 rounded-input bg-butter p-3 text-xs text-amber-700">
+                      {recon.flagReasons.map((r) => (
+                        <li key={r}>• {r}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
+              ) : period.status === "AWAITING_SOURCE" ? (
+                <p className="text-sm text-ink-700">
+                  Waiting for the ENA figure (typically 30–45 days after period
+                  end). Provisional inverter figures are display-only and cannot
+                  enter the ledger.
+                </p>
               ) : (
                 <p className="text-sm text-ink-700">Not yet reconciled.</p>
               )}
 
               <div className="flex flex-wrap items-center gap-2">
-                {(period.status === "OPEN" || period.status === "DISPUTED") && (
+                {(period.status === "OPEN" ||
+                  period.status === "AWAITING_SOURCE" ||
+                  period.status === "DISPUTED") && (
                   <form action={runReconciliationAction}>
                     <input type="hidden" name="periodId" value={period.id} />
                     <button className="min-h-11 rounded-input bg-teal-600 px-4 text-sm font-semibold text-white">
@@ -119,12 +138,12 @@ export default async function ReconciliationPage({
                     </button>
                   </form>
                 )}
-                {period.status === "OPEN" && (
+                {(period.status === "OPEN" || period.status === "AWAITING_SOURCE") && (
                   <form action={runReconciliationAction}>
                     <input type="hidden" name="periodId" value={period.id} />
                     <input type="hidden" name="supervisorApproved" value="true" />
                     <button className="min-h-11 rounded-input border border-ink-200 px-4 text-sm text-ink-700">
-                      Run with supervisor approval (single source)
+                      Run with supervisor approval (ENA-only, no inverter)
                     </button>
                   </form>
                 )}
@@ -140,12 +159,13 @@ export default async function ReconciliationPage({
                   <div className="flex flex-wrap gap-2">
                     <select name="outcome" className="min-h-11 flex-1 rounded-input border border-ink-200 bg-surface-1 px-3 text-sm">
                       {[
-                        "INSTRUMENT_FAULT",
-                        "COMMS_GAP",
-                        "CURTAILMENT",
-                        "METER_REPLACEMENT",
                         "BILLING_LAG",
-                        "DATA_ERROR",
+                        "ENA_ESTIMATED_READING",
+                        "INVERTER_OFFLINE",
+                        "CURTAILMENT",
+                        "SITE_LOAD_CHANGE",
+                        "EXTRACTION_ERROR",
+                        "METER_REPLACEMENT",
                         "ACCEPTED_WITH_VARIANCE",
                       ].map((o) => (
                         <option key={o} value={o}>

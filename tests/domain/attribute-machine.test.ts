@@ -10,7 +10,7 @@ import {
 const goodGuards: AllocationGuardInput = {
   periodStatus: "RECONCILED",
   contractValidAcrossPeriod: true,
-  calibrationValidAcrossPeriod: true,
+  evidenceBasisValidAcrossPeriod: true,
   track: "IREC",
 };
 
@@ -85,13 +85,13 @@ describe("ALLOCATED guards (S7-2)", () => {
     expect(res).toMatchObject({ ok: false, reasonKey: "contract_invalid" });
   });
 
-  it("blocks when calibration lapses inside the period", () => {
+  it("blocks when the evidence basis (consent or calibration) lapses inside the period", () => {
     const res = validateTransition({
       from: "ELIGIBLE",
       to: "ALLOCATED",
-      guards: { ...goodGuards, calibrationValidAcrossPeriod: false },
+      guards: { ...goodGuards, evidenceBasisValidAcrossPeriod: false },
     });
-    expect(res).toMatchObject({ ok: false, reasonKey: "calibration_invalid" });
+    expect(res).toMatchObject({ ok: false, reasonKey: "evidence_basis_invalid" });
   });
 
   it("blocks when no track is assigned", () => {

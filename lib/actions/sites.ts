@@ -29,6 +29,13 @@ const siteWizardSchema = z.object({
   lon: z.coerce.number().min(-180).max(180).optional(),
   address: z.string().optional(),
   isSandbox: z.coerce.boolean().default(false),
+  // R1: ENA identification, captured at creation (S3B-4).
+  enaAccountNumber: z
+    .string()
+    .regex(/^\d{6,12}$/, "ENA account number must be 6–12 digits")
+    .optional()
+    .or(z.literal("")),
+  connectionPointId: z.string().optional(),
 });
 
 export async function createSiteAction(formData: FormData): Promise<void> {
@@ -73,6 +80,8 @@ export async function createSiteAction(formData: FormData): Promise<void> {
       lon: data.lon != null ? String(data.lon) : null,
       address: data.address,
       isSandbox: data.isSandbox,
+      enaAccountNumber: data.enaAccountNumber || null,
+      connectionPointId: data.connectionPointId || null,
     })
     .returning();
 

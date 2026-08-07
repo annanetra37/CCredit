@@ -7,7 +7,15 @@
  * reconciliation, ledger and calculation code as real ones.
  */
 
-export type ReadingSourceKind = "MANUAL" | "METER" | "INVERTER_API";
+export type ReadingSourceKind =
+  | "ENA_BILLING"
+  | "METER"
+  | "OWNER_STATEMENT"
+  | "INVERTER_API"
+  | "MANUAL";
+
+/** R1 §4.2: what a reading measures — sources no longer measure the same thing. */
+export type MeasuredQuantity = "GENERATION" | "EXPORT" | "IMPORT" | "CONSUMPTION";
 
 export interface RawReading {
   deviceId: string;
@@ -15,9 +23,11 @@ export interface RawReading {
   ts: Date;
   /** Cumulative meter register, when the instrument reports one. */
   registerWh: number | null;
-  /** Energy generated in this interval. */
+  /** Energy in this interval. */
   intervalWh: number;
   source: ReadingSourceKind;
+  /** What this figure measures (R1 §4.2). */
+  quantity: MeasuredQuantity;
   /** Required when source = MANUAL — the operator who typed it. */
   enteredBy: string | null;
 }

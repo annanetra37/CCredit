@@ -7,6 +7,7 @@ import { runChainVerification } from "./verify-chains";
 import {
   runCalibrationAlerts,
   runConsentExpiry,
+  runEnaOverdueCheck,
   runIssuanceWindowMonitor,
 } from "./expiry-alerts";
 
@@ -25,6 +26,8 @@ async function main() {
     { name: "calibration-alerts", cron: "0 4 * * *", handler: () => runCalibrationAlerts() },
     { name: "consent-expiry", cron: "15 4 * * *", handler: () => runConsentExpiry() },
     { name: "issuance-window", cron: "30 4 * * *", handler: () => runIssuanceWindowMonitor() },
+    // R1 S3B-4: chase silent ENA periods daily.
+    { name: "ena-overdue", cron: "45 4 * * *", handler: () => runEnaOverdueCheck() },
   ];
 
   for (const q of queues) {

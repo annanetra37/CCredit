@@ -39,6 +39,11 @@ const STATUS_TONE: Record<string, PillTone> = {
   TERMINATED: "blush",
   // generic
   OPEN: "sand",
+  AWAITING_SOURCE: "butter",
+  FLAGGED: "butter",
+  PENDING: "sand",
+  CONFIRMED: "mint",
+  CORRECTED: "butter",
   DRAFT: "sand",
   SUBMITTED: "mist",
   LOCKED: "butter",
@@ -50,6 +55,7 @@ const STATUS_TONE: Record<string, PillTone> = {
 
 /** Status → glossary key, where a state deserves an explanation. */
 const STATUS_TERM: Record<string, string> = {
+  AWAITING_SOURCE: "provisional_figure",
   RECONCILED: "reconciliation",
   DISPUTED: "tolerance",
   REDEEMED: "redemption",

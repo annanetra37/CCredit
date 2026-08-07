@@ -45,11 +45,15 @@ export function legalNextStatuses(from: AttrStatus): AttrStatus[] {
 
 export interface AllocationGuardInput {
   /** Period status must be RECONCILED. */
-  periodStatus: "OPEN" | "RECONCILED" | "DISPUTED" | "VOID";
+  periodStatus: "OPEN" | "AWAITING_SOURCE" | "RECONCILED" | "DISPUTED" | "VOID";
   /** A contract must be valid across the whole period. */
   contractValidAcrossPeriod: boolean;
-  /** Calibration must cover the whole period (see hasValidCalibration). */
-  calibrationValidAcrossPeriod: boolean;
+  /**
+   * The evidentiary basis must cover the whole period (R1 §7): a valid ENA
+   * data-release consent (hasValidEvidenceBasis) — or, for sites that promote
+   * our own METER to record of account, calibration (hasValidCalibration).
+   */
+  evidenceBasisValidAcrossPeriod: boolean;
   /** A track must be assigned before allocation. */
   track: AttrTrack;
 }
@@ -110,12 +114,12 @@ export function validateTransition(req: TransitionRequest): TransitionResult {
           "No valid contract covers the whole period. Attributes cannot accrue without a signed basis.",
       };
     }
-    if (!g.calibrationValidAcrossPeriod) {
+    if (!g.evidenceBasisValidAcrossPeriod) {
       return {
         ok: false,
-        reasonKey: "calibration_invalid",
+        reasonKey: "evidence_basis_invalid",
         reason:
-          "Meter calibration does not cover the whole period. Expired calibration blocks issuance.",
+          "The evidentiary basis does not cover the whole period — no valid ENA data-release consent (or meter calibration, where our own meter is the record of account). An attribute cannot be created on a period we have no right to sell.",
       };
     }
     if (g.track === "UNASSIGNED") {

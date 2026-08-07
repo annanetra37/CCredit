@@ -41,9 +41,10 @@ export default async function ManualEntryPage({
         Manual reading entry <SourceBadge source="MANUAL" />
       </h1>
       <p className="text-sm text-ink-700">
-        Type in a period&apos;s generation figures and they flow through exactly the
-        same reconciliation, ledger and calculation code as hardware readings.
-        Every figure is stored with who typed it, permanently.
+        The operational fallback for late or missing ENA data (and the sandbox
+        test path). Figures typed here flow through exactly the same
+        reconciliation, ledger and calculation code as ENA billing data —
+        loudly badged MANUAL, with who typed them stored permanently.
       </p>
       {error && (
         <p role="alert" className="rounded-input bg-blush px-3 py-2 text-sm font-medium text-rose-700">
@@ -70,29 +71,23 @@ export default async function ManualEntryPage({
           </label>
           <label className={label}>
             <span>
-              Meter export (MWh) <InfoTip termKey="net_export" />
+              Export (MWh) <InfoTip termKey="net_export" />
             </span>
-            <input name="meterMwh" type="number" step="0.0001" min="0" required className={input} />
+            <input name="exportMwh" type="number" step="0.0001" min="0" required className={input} />
             <span className="text-xs font-normal text-ink-500">
-              What a revenue-grade meter at the grid connection would report — the record of account.
+              What reached the grid — the figure the ENA bill will eventually
+              confirm. This is what certificates are issued on.
             </span>
           </label>
           <label className={label}>
             <span>
-              Inverter total (MWh) <InfoTip termKey="reconciliation" />
+              Generation (MWh) <InfoTip termKey="self_consumption" />
             </span>
-            <input name="inverterMwh" type="number" step="0.0001" min="0" className={input} />
+            <input name="generationMwh" type="number" step="0.0001" min="0" className={input} />
             <span className="text-xs font-normal text-ink-500">
-              What the inverter believes it produced. Usually slightly higher than the meter — cable losses are real.
-            </span>
-          </label>
-          <label className={label}>
-            <span>
-              Utility bill (MWh) <InfoTip termKey="tolerance" />
-            </span>
-            <input name="utilityMwh" type="number" step="0.0001" min="0" className={input} />
-            <span className="text-xs font-normal text-ink-500">
-              What the utility credited. Often lags by a billing cycle — the third opinion.
+              Everything the panels produced (the inverter figure). On a
+              self-consuming site this is LARGER than export — that difference
+              is normal, not a dispute.
             </span>
           </label>
           <label className={label}>
@@ -104,8 +99,8 @@ export default async function ManualEntryPage({
 
           <div className="rounded-input bg-mist p-3 text-sm text-ink-900">
             On submit: readings land as <strong>MANUAL</strong> under your name, the
-            period is created, and you&apos;re taken to reconciliation to watch the
-            three numbers face each other.
+            period is created, and you&apos;re taken to reconciliation to watch export
+            and generation face each other.
           </div>
 
           <button className="min-h-11 rounded-input bg-teal-600 text-sm font-semibold text-white">

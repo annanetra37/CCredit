@@ -111,6 +111,37 @@ export async function runConsentExpiry(now = new Date()): Promise<number> {
   return actions;
 }
 
+/**
+ * R1 S3B-4: coverage monitoring. Periods whose ENA data has not arrived
+ * within the expected latency raise a ticket naming the site, period and
+ * days overdue — revenue is not lost to silence. The issuance-window monitor
+ * below still counts from PERIOD END, not data arrival: the clock does not
+ * wait for ENA.
+ */
+export async function runEnaOverdueCheck(
+  expectedLatencyDays = 45,
+  now = new Date(),
+): Promise<number> {
+  const db = getDb();
+  const periods = await db.select().from(tables.periods);
+
+  let raised = 0;
+  for (const p of periods) {
+    if (p.status !== "OPEN" && p.status !== "AWAITING_SOURCE") continue;
+    const daysSinceEnd = Math.floor((now.getTime() - p.endsOn.getTime()) / 86400000);
+    if (daysSinceEnd <= expectedLatencyDays) continue;
+    await db.insert(tables.alerts).values({
+      kind: "ENA_DATA_OVERDUE",
+      severity: daysSinceEnd > expectedLatencyDays + 30 ? "critical" : "warning",
+      siteId: p.siteId,
+      message: `ENA data for ${p.startsOn.toISOString().slice(0, 7)} is ${daysSinceEnd - expectedLatencyDays} day(s) overdue (expected within ${expectedLatencyDays} days of period end). Chase ENA or use the manual fallback.`,
+      detail: { periodId: p.id, daysSinceEnd },
+    });
+    raised++;
+  }
+  return raised;
+}
+
 /** S9-4: warn when a period nears the Issuer's retrospective issuance window. */
 export async function runIssuanceWindowMonitor(
   windowDays = 365,
