@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — §4.1 of the build guide.
+ * The rule that keeps pastel readable: pastels are FILLS ONLY (backgrounds,
+ * badges, surfaces). Text and icons always use ink or the deep accent
+ * variants. Never pastel text on pastel fill.
+ *
+ * Tokens live in CSS variables so theming is data, not code.
+ * tests/design/contrast.test.ts asserts WCAG AA on every text/background pair.
+ */
+:root {
+  /* Surfaces */
+  --surface-0: #fbfaf8; /* app background, warm paper */
+  --surface-1: #ffffff; /* cards, panels */
+  --surface-2: #f2f0eb; /* recessed areas, table headers */
+
+  /* Layer tints — colour as meaning (§4.2) */
+  --mist: #e6f0ef; /* measurement: readings, devices, reconciliation */
+  --peach: #fbebe0; /* energy: generation, MWh, I-RECs */
+  --lilac: #ede8f5; /* carbon: emission factors, calculations, VCUs */
+
+  /* Status fills */
+  --mint: #e2f0e7; /* success, reconciled, healthy */
+  --butter: #faf0d8; /* warning, expiring, attention */
+  --blush: #f8e5e5; /* error, disputed, blocked */
+
+  /* Ink */
+  --ink-900: #1e2a2e; /* primary text */
+  --ink-700: #3d4c51; /* secondary text */
+  /* tertiary, captions — darkened from the spec's #6B7A7E (4.46:1) to clear
+     WCAG AA 4.5:1 on white; the contrast test caught the original value */
+  --ink-500: #68777b;
+  --ink-200: #dce1e0; /* borders, dividers */
+
+  /* Deep accents — the only colours allowed for text on tinted fills */
+  --teal-600: #256f6d; /* primary action, links, data accents */
+  /* energy accents, on-peach text — darkened from the spec's #A05B2B
+     (4.49:1 on peach) to clear WCAG AA 4.5:1 */
+  --apricot-700: #9c5828;
+  --lilac-700: #63508f; /* carbon accents, on-lilac text */
+  --mint-700: #33714f; /* success text */
+  --amber-700: #846010; /* warning text */
+  --rose-700: #94404a; /* danger text */
+
+  /* Shape (§4.3) */
+  --radius-card: 12px;
+  --radius-input: 8px;
+  --radius-badge: 999px;
+}
+
+@theme inline {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-mist: var(--mist);
+  --color-peach: var(--peach);
+  --color-lilac: var(--lilac);
+  --color-mint: var(--mint);
+  --color-butter: var(--butter);
+  --color-blush: var(--blush);
+  --color-ink-900: var(--ink-900);
+  --color-ink-700: var(--ink-700);
+  --color-ink-500: var(--ink-500);
+  --color-ink-200: var(--ink-200);
+  --color-teal-600: var(--teal-600);
+  --color-apricot-700: var(--apricot-700);
+  --color-lilac-700: var(--lilac-700);
+  --color-mint-700: var(--mint-700);
+  --color-amber-700: var(--amber-700);
+  --color-rose-700: var(--rose-700);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --radius-card: 12px;
+  --radius-input: 8px;
+  --radius-badge: 999px;
+
+  /* Spacing scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 — generous on purpose */
+  --spacing: 4px;
+}
+
+body {
+  background: var(--surface-0);
+  color: var(--ink-900);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Owner- and vendor-facing surfaces use a larger base for older users (§4.3) */
+[data-audience="external"] body,
+body[data-audience="external"] {
+  font-size: 15px;
+}
+
+/* Numbers and identifiers: IBM Plex Mono, tabular figures, always */
+.numeric,
+[data-numeric] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visible focus ring everywhere — definition of done requires it */
+:focus-visible {
+  outline: 2px solid var(--teal-600);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Shadows: at most one level, very soft */
+.shadow-soft {
+  box-shadow: 0 1px 3px rgb(30 42 46 / 0.06);
+}

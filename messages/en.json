@@ -1,0 +1,88 @@
+{
+  "common": {
+    "appName": "Attribute Origination Portal",
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "edit": "Edit",
+    "loading": "Loading…",
+    "actions": "Actions",
+    "status": "Status",
+    "site": "Site",
+    "period": "Period",
+    "date": "Date",
+    "language": "Language",
+    "signOut": "Sign out",
+    "learnMore": "Learn more",
+    "download": "Download",
+    "confirm": "Confirm",
+    "reason": "Reason",
+    "notes": "Notes",
+    "history": "History",
+    "total": "Total",
+    "filter": "Filter",
+    "export": "Export CSV",
+    "environment": { "local": "LOCAL", "sandbox": "SANDBOX", "production": "PRODUCTION" }
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "sites": "Sites",
+    "devices": "Devices",
+    "readings": "Readings",
+    "manualEntry": "Manual entry",
+    "bulkImport": "Bulk import",
+    "reconciliation": "Reconciliation",
+    "attributes": "Attribute ledger",
+    "inventory": "Inventory",
+    "calculations": "Carbon calculations",
+    "issuance": "I-REC issuance",
+    "contracts": "Contracts",
+    "commercial": "Offtake & settlement",
+    "glossary": "Glossary",
+    "audit": "Audit log",
+    "admin": "Admin",
+    "design": "Design system",
+    "ownerPortal": "My solar",
+    "vendorPortal": "Fleet",
+    "auditorConsole": "Auditor console"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "email": "Email",
+    "password": "Password",
+    "invalidCredentials": "Email or password is incorrect.",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "accountExpired": "This account has expired. Contact the administrator.",
+    "forbidden": "You do not have permission to view this page."
+  },
+  "sandbox": {
+    "banner": "SANDBOX — nothing here can reach a real registry. Practice freely.",
+    "explainer": "This site is in sandbox mode: same pipeline, same rules, but issuance to a live registry is physically blocked."
+  },
+  "source": {
+    "MANUAL": "Manual",
+    "METER": "Meter",
+    "INVERTER_API": "Inverter API",
+    "manualWarning": "This number was typed in by a person, not measured by an instrument."
+  },
+  "glossary": {
+    "title": "Glossary",
+    "subtitle": "Every strange word in this portal, explained in plain language.",
+    "searchPlaceholder": "Search terms…",
+    "whyItMatters": "Why it matters",
+    "example": "Example",
+    "related": "Related terms",
+    "group": { "attributes": "Attributes", "carbon": "Carbon", "measurement": "Measurement", "roles": "Roles", "system": "System" }
+  },
+  "empty": {
+    "generic": "Nothing here yet.",
+    "sites": "No sites yet. Create the first one — it takes about ten minutes from a phone.",
+    "readings": "No readings for this selection. Enter data manually or connect a device.",
+    "disputes": "No disputed periods. Everything reconciles within tolerance.",
+    "inventory": "No attributes yet. They appear when a period is measured and reconciled."
+  }
+}
