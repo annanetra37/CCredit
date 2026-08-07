@@ -12,7 +12,19 @@ import postgres from "postgres";
 
 async function main() {
   const url = process.env.DATABASE_ADMIN_URL ?? process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_ADMIN_URL (or DATABASE_URL) must be set");
+  if (!url) {
+    throw new Error(
+      [
+        "DATABASE_ADMIN_URL (or DATABASE_URL) must be set before migrations can run.",
+        "On Railway: add a PostgreSQL service to the project, then on this service set",
+        '  DATABASE_ADMIN_URL = ${{Postgres.DATABASE_URL}}   (variable reference)',
+        '  DATABASE_URL       = ${{Postgres.DATABASE_URL}}   (or the app_user URL — see docs/DEPLOY_RAILWAY.md §2.3)',
+        "  SESSION_SECRET     = a long random string",
+        "  APP_ENV            = sandbox",
+        "then redeploy. Full guide: docs/DEPLOY_RAILWAY.md",
+      ].join("\n"),
+    );
+  }
   const sql = postgres(url, { max: 1, prepare: false });
 
   await sql`create table if not exists schema_migrations (
