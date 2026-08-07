@@ -1,0 +1,62 @@
+name: CI
+
+# S0-1: CI runs typecheck, lint, unit tests, and blocks merge on failure.
+# The pgTAP job proves the database constraints — including the
+# double-allocation rejection that must pass before any issuance code runs.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  pgtap:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: timescale/timescaledb:latest-pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: portal
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_ADMIN_URL: postgres://postgres:postgres@localhost:5432/portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install pgTAP + pg_prove
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client libtap-parser-sourcehandler-pgtap-perl
+          psql "$DATABASE_ADMIN_URL" -c 'create extension if not exists pgtap' || {
+            # image lacks pgtap package; build from source
+            sudo apt-get install -y build-essential postgresql-server-dev-all git
+            git clone --depth 1 https://github.com/theory/pgtap.git /tmp/pgtap
+            make -C /tmp/pgtap && sudo make -C /tmp/pgtap install
+          }
+      - name: Apply migrations
+        run: npm run db:migrate
+      - name: Enable pgtap and run constraint tests
+        run: |
+          psql "$DATABASE_ADMIN_URL" -c 'create extension if not exists pgtap'
+          pg_prove -d "$DATABASE_ADMIN_URL" tests/pgtap/*.sql

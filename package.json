@@ -1,0 +1,44 @@
+{
+  "name": "attribute-origination-portal",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Attribute Origination Portal — turns solar electricity readings into saleable certificates (I-RECs and VCUs) with an audit trail that holds.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate": "tsx lib/db/migrate.ts",
+    "db:seed": "tsx lib/db/seed.ts",
+    "db:seed-scenarios": "tsx lib/db/seed-scenarios.ts",
+    "jobs": "tsx jobs/runner.ts"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.0.1",
+    "@tanstack/react-table": "^8.21.3",
+    "bcryptjs": "^3.0.2",
+    "drizzle-orm": "^0.44.2",
+    "next": "^15.3.4",
+    "next-intl": "^4.1.0",
+    "pg-boss": "^10.3.2",
+    "postgres": "^3.4.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.58.1",
+    "recharts": "^2.15.3",
+    "zod": "^3.25.67"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.10",
+    "@types/node": "^22.15.32",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "tailwindcss": "^4.1.10",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
