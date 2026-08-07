@@ -4,9 +4,20 @@
 -- DDL require ownership.
 
 create extension if not exists pgcrypto;
--- TimescaleDB is required in real environments; tolerated as absent in CI
--- containers that lack the extension (the hypertable call below is guarded).
-create extension if not exists timescaledb cascade;
+
+-- TimescaleDB is preferred in real environments but tolerated as absent
+-- (Railway managed Postgres, plain CI containers): the extension creation is
+-- attempted, and the hypertable call further down only runs if it succeeded.
+-- Readings then live in a plain table — fine for demo volumes; switch to the
+-- timescale/timescaledb image before real meter data arrives.
+do $$
+begin
+  begin
+    create extension if not exists timescaledb cascade;
+  exception when others then
+    raise notice 'timescaledb extension not available on this server — continuing without hypertables';
+  end;
+end $$;
 
 -- The application role. The portal connects as app_user; migrations run as
 -- the superuser. This split is what makes "REVOKE UPDATE, DELETE" meaningful.
