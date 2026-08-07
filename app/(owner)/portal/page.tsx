@@ -51,38 +51,38 @@ export default async function OwnerPortalPage() {
     <div data-audience="external" className="mx-auto flex max-w-2xl flex-col gap-4 p-4 text-[15px]">
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-ink-900">
-          ☀️ Իմ արևային կայանը / My solar
+          ☀️ My solar / Իմ արևային կայանը
         </h1>
         <form action={logoutAction}>
-          <button className="text-sm text-teal-600 underline">Դուրս գալ</button>
+          <button className="text-sm text-teal-600 underline">Sign out</button>
         </form>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <DataCard layer="energy" title="Արտադրություն / Generation" infoKey="net_export">
+        <DataCard layer="energy" title="Generation / Արտադրություն" infoKey="net_export">
           <p className="numeric text-3xl font-semibold text-ink-900">
-            {totalMwh.toFixed(2)} <span className="text-sm text-ink-500">ՄՎտ·ժ / MWh</span>
+            {totalMwh.toFixed(2)} <span className="text-sm text-ink-500">MWh</span>
           </p>
         </DataCard>
-        <DataCard layer="commercial" title="Վճարումներ / Earnings" infoKey="retained_share">
+        <DataCard layer="commercial" title="Earnings / Վճարումներ" infoKey="retained_share">
           <p className="numeric text-3xl font-semibold text-ink-900">
             {totalNetAmd.toLocaleString("hy-AM")} <span className="text-sm text-ink-500">֏</span>
           </p>
         </DataCard>
       </div>
 
-      <DataCard layer="energy" title="Ամսական / By month" infoKey="vintage">
+      <DataCard layer="energy" title="By month / Ամսական" infoKey="vintage">
         {attrs.length === 0 ? (
           <p className="text-sm text-ink-700">
-            Դեռ տվյալներ չկան: Երբ ձեր կայանը սկսի չափվել, ամեն ամիս այստեղ
-            կհայտնվի: / No data yet — each month appears here once measured.
+            No data yet — each month appears here once your site is measured. /
+            Դեռ տվյալներ չկան․ չափումից հետո ամեն ամիս այստեղ կհայտնվի:
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-ink-200">
             {attrs.map(({ attr, period }) => (
               <li key={attr.id} className="flex items-center justify-between py-2">
                 <span className="numeric">{period.startsOn.toISOString().slice(0, 7)}</span>
-                <span className="numeric font-semibold">{Number(attr.mwh).toFixed(2)} ՄՎտ·ժ</span>
+                <span className="numeric font-semibold">{Number(attr.mwh).toFixed(2)} MWh</span>
                 <StatusPill status={attr.status} />
               </li>
             ))}
@@ -90,20 +90,19 @@ export default async function OwnerPortalPage() {
         )}
       </DataCard>
 
-      <DataCard layer="commercial" title="Վճարումների պատմություն / Payout statements">
+      <DataCard layer="commercial" title="Payout statements / Վճարումների պատմություն">
         {payouts.length === 0 ? (
           <p className="text-sm text-ink-700">
-            Առաջին վճարումից հետո այստեղ կտեսնեք ամեն ամսվա հաշվետվությունը՝
-            ՄՎտ·ժ, սակագին, համախառն, պահումներ, զուտ: / After your first
-            payout, each monthly statement appears here: MWh, rate, gross,
-            deductions, net.
+            After your first payout, each monthly statement appears here: MWh,
+            rate, gross, deductions, net. / Առաջին վճարումից հետո այստեղ
+            կտեսնեք ամեն ամսվա հաշվետվությունը:
           </p>
         ) : (
           <ul className="flex flex-col divide-y divide-ink-200">
             {payouts.map((p) => (
               <li key={p.id} className="flex items-center justify-between py-2">
                 <span className="numeric">{p.periodLabel}</span>
-                <span className="numeric">{Number(p.mwh).toFixed(2)} ՄՎտ·ժ</span>
+                <span className="numeric">{Number(p.mwh).toFixed(2)} MWh</span>
                 <span className="numeric font-semibold">{Number(p.netAmd).toLocaleString("hy-AM")} ֏</span>
               </li>
             ))}
@@ -111,17 +110,16 @@ export default async function OwnerPortalPage() {
         )}
       </DataCard>
 
-      <DataCard layer="carbon" title="Ինչ կարող եմ ասել / What may I claim?" infoKey="double_counting">
+      <DataCard layer="carbon" title="What may I claim? / Ինչ կարող եմ ասել" infoKey="double_counting">
         <p className="text-sm leading-relaxed text-ink-900">
-          Վաճառված ատրիբուտների մասին «մենք աշխատում ենք արևով» ասել չի կարելի —
-          դա այժմ գնորդինն է: Ձեր պահվող բաժինը
-          <InfoTip termKey="retained_share" /> մնում է ձերը, և դրա համար կարող եք
-          ներբեռնել հայտարարության փաստաթուղթ:
+          You may not say “we run on solar” for sold attributes — that claim now
+          belongs to the buyer. Your retained share
+          <InfoTip termKey="retained_share" /> stays yours, with a downloadable
+          claim statement.
         </p>
         <p className="mt-2 text-sm leading-relaxed text-ink-700">
-          You may not say “we run on solar” for sold attributes — that claim now
-          belongs to the buyer. Your retained share stays yours, with a
-          downloadable claim statement.
+          Վաճառված ատրիբուտների մասին «մենք աշխատում ենք արևով» ասել չի կարելի —
+          դա այժմ գնորդինն է: Ձեր պահվող բաժինը մնում է ձերը:
         </p>
       </DataCard>
     </div>
