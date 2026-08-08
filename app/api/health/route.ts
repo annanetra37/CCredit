@@ -11,16 +11,26 @@ export const dynamic = "force-dynamic";
  * glossary seed, which is deliberate for first-boot before the DB is wired.
  */
 export async function GET() {
+  // Config sanity: name exactly what is missing so a broken deploy explains
+  // itself instead of failing at the login screen.
+  const missing: string[] = [];
+  if (!process.env.SESSION_SECRET) missing.push("SESSION_SECRET (required — login cannot work without it)");
+  if (!process.env.APP_ENV) missing.push("APP_ENV (recommended: sandbox | production)");
+
   const url = process.env.DATABASE_URL;
   if (!url) {
-    return NextResponse.json({ ok: true, db: "not_configured" });
+    return NextResponse.json({ ok: true, db: "not_configured", missing });
   }
   try {
     const sql = postgres(url, { max: 1, connect_timeout: 5, prepare: false });
-    await sql`select 1`;
+    const [row] = await sql`select count(*)::int as n from app_account`;
     await sql.end({ timeout: 2 });
-    return NextResponse.json({ ok: true, db: "up" });
+    const accounts = row?.n ?? 0;
+    if (accounts === 0) {
+      missing.push("no accounts in the database — run `npm run db:seed` (it now also runs automatically on deploy)");
+    }
+    return NextResponse.json({ ok: true, db: "up", accounts, missing });
   } catch {
-    return NextResponse.json({ ok: false, db: "down" }, { status: 503 });
+    return NextResponse.json({ ok: false, db: "down", missing }, { status: 503 });
   }
 }

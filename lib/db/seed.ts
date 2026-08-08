@@ -42,6 +42,9 @@ async function main() {
   }
 
   // ---------------- demo users, one per role
+  // Password defaults to "portal-demo"; set DEMO_PASSWORD to override.
+  // When DEMO_PASSWORD is explicitly set, existing demo accounts are updated
+  // to it — so rotating the password is one env var + one deploy.
   const demo: Array<[string, string, string]> = [
     ["admin@portal.am", "Admin", "admin"],
     ["ops@portal.am", "Operations", "ops"],
@@ -53,15 +56,26 @@ async function main() {
     ["vendor@portal.am", "Demo Vendor", "vendor"],
     ["auditor@portal.am", "Demo Auditor", "auditor"],
   ];
-  const pw = await hash("portal-demo", 12);
+  const explicitPassword = process.env.DEMO_PASSWORD;
+  const pw = await hash(explicitPassword ?? "portal-demo", 12);
   for (const [email, name, role] of demo) {
-    await sql`
-      insert into app_account (email, password_hash, name, role)
-      values (${email}, ${pw}, ${name}, ${role}::user_role)
-      on conflict (email) do nothing
-    `;
+    if (explicitPassword) {
+      await sql`
+        insert into app_account (email, password_hash, name, role)
+        values (${email}, ${pw}, ${name}, ${role}::user_role)
+        on conflict (email) do update set password_hash = excluded.password_hash
+      `;
+    } else {
+      await sql`
+        insert into app_account (email, password_hash, name, role)
+        values (${email}, ${pw}, ${name}, ${role}::user_role)
+        on conflict (email) do nothing
+      `;
+    }
   }
-  console.log("demo accounts seeded (password: portal-demo)");
+  console.log(
+    `demo accounts seeded (password: ${explicitPassword ? "from DEMO_PASSWORD" : "portal-demo"})`,
+  );
 
   // ---------------- contract template v1, both locales (S2-1/S2-2)
   for (const [locale, body] of [
