@@ -1,0 +1,257 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1700" viewBox="0 0 1500 1700" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#3D4C51"/>
+    </marker>
+    <marker id="arrTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#256F6D"/>
+    </marker>
+    <marker id="arrRose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94404A"/>
+    </marker>
+  </defs>
+
+  <rect width="1500" height="1700" fill="#FBFAF8"/>
+  <text x="60" y="36" font-size="24" font-weight="700" fill="#1E2A2E">Attribute Origination Portal — technical architecture (Revision R1, utility-data first)</text>
+
+  <!-- ================= PEOPLE ================= -->
+  <g font-size="13">
+    <rect x="60"  y="60" width="165" height="64" rx="12" fill="#FBEBE0"/>
+    <text x="142" y="86" text-anchor="middle" font-weight="700" fill="#9C5828">Site owner</text>
+    <text x="142" y="106" text-anchor="middle" fill="#1E2A2E">“My solar”</text>
+
+    <rect x="243" y="60" width="165" height="64" rx="12" fill="#FBEBE0"/>
+    <text x="325" y="86" text-anchor="middle" font-weight="700" fill="#9C5828">Installer (vendor)</text>
+    <text x="325" y="106" text-anchor="middle" fill="#1E2A2E">“Fleet”</text>
+
+    <rect x="426" y="60" width="165" height="64" rx="12" fill="#E6F0EF"/>
+    <text x="508" y="86" text-anchor="middle" font-weight="700" fill="#256F6D">Field tech</text>
+    <text x="508" y="106" text-anchor="middle" fill="#1E2A2E">site wizard, phone</text>
+
+    <rect x="609" y="60" width="165" height="64" rx="12" fill="#E6F0EF"/>
+    <text x="691" y="80" text-anchor="middle" font-weight="700" fill="#256F6D">Ops · MRV · Carbon</text>
+    <text x="691" y="98" text-anchor="middle" font-weight="700" fill="#256F6D">· Commercial</text>
+    <text x="691" y="116" text-anchor="middle" fill="#1E2A2E">internal console</text>
+
+    <rect x="792" y="60" width="165" height="64" rx="12" fill="#F2F0EB"/>
+    <text x="874" y="86" text-anchor="middle" font-weight="700" fill="#3D4C51">Admin</text>
+    <text x="874" y="106" text-anchor="middle" fill="#1E2A2E">sessions, glossary</text>
+
+    <rect x="975" y="60" width="165" height="64" rx="12" fill="#EDE8F5"/>
+    <text x="1057" y="86" text-anchor="middle" font-weight="700" fill="#63508F">Auditor (VVB)</text>
+    <text x="1057" y="106" text-anchor="middle" fill="#1E2A2E">read-only, expiring</text>
+  </g>
+
+  <line x1="600" y1="124" x2="600" y2="196" stroke="#3D4C51" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="615" y="165" font-size="12" fill="#68777B">HTTPS — signed session cookie, role decides which rooms exist</text>
+
+  <!-- ================= NEXT.JS APP ================= -->
+  <rect x="60" y="200" width="1080" height="470" rx="12" fill="#FFFFFF" stroke="#DCE1E0"/>
+  <text x="80" y="228" font-size="16" font-weight="700" fill="#1E2A2E">Next.js 15 application (one deployable on Railway)</text>
+
+  <rect x="80" y="242" width="1040" height="42" rx="8" fill="#F2F0EB"/>
+  <text x="95" y="268" font-size="12.5" fill="#1E2A2E"><tspan font-weight="700">middleware.ts</tspan> — no session cookie → /login · each route-group layout re-checks the role server-side → 403, never a redirect loop</text>
+
+  <g font-size="12">
+    <rect x="80" y="298" width="196" height="122" rx="8" fill="#E6F0EF"/>
+    <text x="92" y="318" font-weight="700" fill="#256F6D">(ops) console</text>
+    <text x="92" y="336" fill="#1E2A2E">dashboard · sites · ENA data</text>
+    <text x="92" y="352" fill="#1E2A2E">readings · reconciliation</text>
+    <text x="92" y="368" fill="#1E2A2E">attributes · issuance</text>
+    <text x="92" y="384" fill="#1E2A2E">audit · admin</text>
+
+    <rect x="288" y="298" width="196" height="122" rx="8" fill="#FBEBE0"/>
+    <text x="300" y="318" font-weight="700" fill="#9C5828">(owner) portal</text>
+    <text x="300" y="336" fill="#1E2A2E">generation (provisional</text>
+    <text x="300" y="352" fill="#1E2A2E">vs confirmed) · earnings</text>
+    <text x="300" y="368" fill="#1E2A2E">payouts · claim rules</text>
+
+    <rect x="496" y="298" width="196" height="122" rx="8" fill="#FBEBE0"/>
+    <text x="508" y="318" font-weight="700" fill="#9C5828">(vendor) fleet</text>
+    <text x="508" y="336" fill="#1E2A2E">installed base health</text>
+    <text x="508" y="352" fill="#1E2A2E">commissions</text>
+
+    <rect x="704" y="298" width="196" height="122" rx="8" fill="#EDE8F5"/>
+    <text x="716" y="318" font-weight="700" fill="#63508F">(auditor) console</text>
+    <text x="716" y="336" fill="#1E2A2E">asOf time machine</text>
+    <text x="716" y="352" fill="#1E2A2E">chain verification</text>
+    <text x="716" y="368" fill="#1E2A2E">traceable calcs</text>
+    <text x="716" y="384" fill="#1E2A2E">every view audited</text>
+
+    <rect x="912" y="298" width="208" height="122" rx="8" fill="#F2F0EB"/>
+    <text x="924" y="318" font-weight="700" fill="#3D4C51">public</text>
+    <text x="924" y="336" fill="#1E2A2E">/login · /glossary</text>
+    <text x="924" y="352" fill="#1E2A2E">/design (component</text>
+    <text x="924" y="368" fill="#1E2A2E">gallery) · /api/health</text>
+  </g>
+
+  <rect x="80" y="434" width="1040" height="50" rx="8" fill="#EDE8F5"/>
+  <text x="95" y="454" font-size="12.5" fill="#1E2A2E"><tspan font-weight="700" fill="#63508F">Design system + ELI5:</tspan> DataCard · StatusPill · SourceBadge (MANUAL is loud) · SandboxBanner · TraceLink · StepFlow · EmptyState</text>
+  <text x="95" y="472" font-size="12.5" fill="#1E2A2E"><tspan font-weight="700" fill="#63508F">InfoTip ⓘ</tspan> reads GlossaryProvider ← glossary_entry table (hy + en, edited in-app, no deploy)</text>
+
+  <rect x="80" y="498" width="1040" height="150" rx="8" fill="#E6F0EF"/>
+  <text x="95" y="520" font-size="13" font-weight="700" fill="#256F6D">Server actions (lib/actions) — the only write path</text>
+  <text x="95" y="540" font-size="12.5" fill="#1E2A2E">every mutation: Zod-validate input → ask the domain layer if it is legal → SQL as app_user → write an audit_event row</text>
+  <g font-size="12" fill="#1E2A2E">
+    <text x="95" y="564">auth (sessions) · sites (wizard, lifecycle, sandbox flag) · ena (consent, bill upload, confirm/reject queue)</text>
+    <text x="95" y="582">readings (manual fallback, bulk import) · reconcile (quantity-aware run, dispute resolution)</text>
+    <text x="95" y="600">attributes (track assignment, guarded transitions) · issuance (register site, issue request) · admin (revoke, glossary)</text>
+    <text x="95" y="630" font-style="italic" fill="#68777B">pages render by reading the same tables back (Drizzle, typed)</text>
+  </g>
+
+  <!-- ================= EXTERNAL WORLD ================= -->
+  <g font-size="12.5">
+    <rect x="1180" y="200" width="280" height="120" rx="12" fill="#FAF0D8" stroke="#846010"/>
+    <text x="1196" y="224" font-weight="700" fill="#846010" font-size="14">ENA — electricity network</text>
+    <text x="1196" y="244" fill="#1E2A2E">Owns the certified, sealed meter</text>
+    <text x="1196" y="261" fill="#1E2A2E">at every connection point.</text>
+    <text x="1196" y="278" fill="#1E2A2E">Bills (CSV/PDF) arrive by feed,</text>
+    <text x="1196" y="295" fill="#1E2A2E">file drop, request or owner upload</text>
+    <text x="1196" y="312" fill="#846010" font-weight="700">30–45 days late — by design</text>
+
+    <rect x="1180" y="350" width="280" height="100" rx="12" fill="#FBEBE0" stroke="#9C5828"/>
+    <text x="1196" y="374" font-weight="700" fill="#9C5828" font-size="14">I-REC Registry (Issuer)</text>
+    <text x="1196" y="394" fill="#1E2A2E">Registers devices, mints</text>
+    <text x="1196" y="411" fill="#1E2A2E">serial-numbered certificates.</text>
+    <text x="1196" y="428" fill="#1E2A2E">mock | sandbox | live (REGISTRY_MODE)</text>
+
+    <rect x="1180" y="480" width="280" height="76" rx="12" fill="#F2F0EB" stroke="#DCE1E0"/>
+    <text x="1196" y="504" font-weight="700" fill="#3D4C51" font-size="14">E-signature provider</text>
+    <text x="1196" y="524" fill="#1E2A2E">contracts + data-release consent;</text>
+    <text x="1196" y="541" fill="#1E2A2E">webhook confirms who/when/IP</text>
+
+    <rect x="1180" y="586" width="280" height="84" rx="12" fill="#F2F0EB" stroke="#DCE1E0"/>
+    <text x="1196" y="610" font-weight="700" fill="#3D4C51" font-size="14">S3 vault (object lock)</text>
+    <text x="1196" y="630" fill="#1E2A2E">immutable documents: signed PDFs,</text>
+    <text x="1196" y="647" fill="#1E2A2E">ENA bills, photos, certificates —</text>
+    <text x="1196" y="664" fill="#1E2A2E">primary evidence for the auditor</text>
+  </g>
+
+  <!-- ENA → app arrow -->
+  <path d="M 1180 260 L 1150 260 L 1150 380 L 1125 380" fill="none" stroke="#846010" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="1152" y="350" font-size="11.5" fill="#846010" transform="rotate(90 1152 350)"></text>
+
+  <!-- ================= LIB LAYER ================= -->
+  <g font-size="12.5">
+    <rect x="60" y="720" width="430" height="300" rx="12" fill="#FFFFFF" stroke="#256F6D" stroke-width="2"/>
+    <text x="76" y="746" font-size="15" font-weight="700" fill="#256F6D">lib/domain — pure business logic</text>
+    <text x="76" y="764" font-size="11.5" font-style="italic" fill="#68777B">no I/O imports — enforced by an architecture test</text>
+    <text x="76" y="790" fill="#1E2A2E">• attribute state machine + 4 allocation guards</text>
+    <text x="76" y="810" fill="#1E2A2E">• site lifecycle state machine</text>
+    <text x="76" y="830" fill="#1E2A2E">• quantity reconciliation (export vs generation,</text>
+    <text x="88" y="848" fill="#1E2A2E">self-consumption; hard rules → DISPUTED,</text>
+    <text x="88" y="866" fill="#1E2A2E">soft rules → FLAGGED)</text>
+    <text x="76" y="886" fill="#1E2A2E">• expected-yield model (Armenian seasons)</text>
+    <text x="76" y="906" fill="#1E2A2E">• hasValidEvidenceBasis (consent coverage)</text>
+    <text x="76" y="926" fill="#1E2A2E">• canEnterLedger (provisional never becomes</text>
+    <text x="88" y="944" fill="#1E2A2E">a certificate) · source ranking</text>
+    <text x="76" y="964" fill="#1E2A2E">• emission calc (factor by vintage) · payout maths</text>
+    <text x="76" y="984" fill="#1E2A2E">• hash-chain verification (mirrors the DB trigger)</text>
+
+    <rect x="520" y="720" width="290" height="300" rx="12" fill="#FFFFFF" stroke="#DCE1E0"/>
+    <text x="536" y="746" font-size="15" font-weight="700" fill="#1E2A2E">lib/adapters</text>
+    <text x="536" y="764" font-size="11.5" font-style="italic" fill="#68777B">one ReadingSource interface — swap the</text>
+    <text x="536" y="780" font-size="11.5" font-style="italic" fill="#68777B">world behind it without touching business logic</text>
+    <text x="536" y="806" fill="#1E2A2E">• EnaBillingSource — drains human-</text>
+    <text x="548" y="824" fill="#1E2A2E">confirmed bill extractions (rank 1)</text>
+    <text x="536" y="846" fill="#1E2A2E">• ManualSource — typed-in fallback,</text>
+    <text x="548" y="864" fill="#1E2A2E">loudly badged (rank 5)</text>
+    <text x="536" y="886" fill="#1E2A2E">• MqttSource — deferred hardware</text>
+    <text x="548" y="904" fill="#1E2A2E">path for non-standard sites</text>
+    <text x="536" y="932" fill="#68777B" font-size="11.5">per-site source_rank picks the record</text>
+    <text x="536" y="948" fill="#68777B" font-size="11.5">of account; reverting to own meters</text>
+    <text x="536" y="964" fill="#68777B" font-size="11.5">is configuration, not a rewrite</text>
+
+    <rect x="840" y="720" width="300" height="300" rx="12" fill="#FFFFFF" stroke="#DCE1E0"/>
+    <text x="856" y="746" font-size="15" font-weight="700" fill="#1E2A2E">lib/integrations</text>
+    <text x="856" y="764" font-size="11.5" font-style="italic" fill="#68777B">the only code allowed to talk to outsiders</text>
+    <text x="856" y="790" fill="#1E2A2E">• registry client — carries THE GATE:</text>
+    <rect x="868" y="800" width="256" height="40" rx="8" fill="#F8E5E5"/>
+    <text x="880" y="817" fill="#94404A" font-weight="700" font-size="11.5">assertNoSandboxAttributes() throws</text>
+    <text x="880" y="833" fill="#94404A" font-size="11.5">before ANY network I/O — no bypass</text>
+    <text x="856" y="864" fill="#1E2A2E">• bill parser (CSV + text, confidence</text>
+    <text x="868" y="882" fill="#1E2A2E">score) → confirmation queue</text>
+    <text x="856" y="904" fill="#1E2A2E">• vault client (immutable PUT)</text>
+    <text x="856" y="926" fill="#1E2A2E">• e-sign provider adapter</text>
+    <text x="856" y="948" fill="#1E2A2E">• field crypto (bank details AES-GCM,</text>
+    <text x="868" y="966" fill="#1E2A2E">masked in lists)</text>
+  </g>
+
+  <!-- arrows app → lib -->
+  <line x1="275" y1="670" x2="275" y2="716" stroke="#256F6D" stroke-width="2" marker-end="url(#arrTeal)"/>
+  <text x="285" y="700" font-size="11.5" fill="#256F6D">“is this legal?” — pure calls, no side effects</text>
+  <line x1="665" y1="670" x2="665" y2="716" stroke="#3D4C51" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="675" y="700" font-size="11.5" fill="#3D4C51">fetch readings per source</text>
+  <line x1="990" y1="670" x2="990" y2="716" stroke="#3D4C51" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="1000" y="700" font-size="11.5" fill="#3D4C51">parse bills · submit · store</text>
+
+  <!-- integrations → externals -->
+  <path d="M 1140 820 L 1320 820 L 1320 454" fill="none" stroke="#94404A" stroke-width="2" marker-end="url(#arrRose)"/>
+  <text x="1330" y="700" font-size="11.5" fill="#94404A" transform="rotate(90 1330 700)">issue request — sandbox blocked 🛑</text>
+  <path d="M 1140 910 L 1360 910 L 1360 674" fill="none" stroke="#3D4C51" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="1372" y="800" font-size="11.5" fill="#3D4C51" transform="rotate(90 1372 800)">immutable PUT / audited GET</text>
+  <path d="M 1140 930 L 1420 930 L 1420 560" fill="none" stroke="#3D4C51" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="1432" y="760" font-size="11.5" fill="#3D4C51" transform="rotate(90 1432 760)">signature request / webhook back</text>
+  <!-- ENA bills into parser -->
+  <path d="M 1180 300 L 1160 300 L 1160 690 L 1010 712" fill="none" stroke="#846010" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="1156" y="420" font-size="11.5" fill="#846010" transform="rotate(90 1156 420)">bills in (any of 4 modes)</text>
+
+  <!-- ================= JOBS + POSTGRES ================= -->
+  <g font-size="12.5">
+    <rect x="60" y="1090" width="400" height="250" rx="12" fill="#FFFFFF" stroke="#DCE1E0"/>
+    <text x="76" y="1116" font-size="15" font-weight="700" fill="#1E2A2E">Jobs — pg-boss workers (second Railway service)</text>
+    <text x="76" y="1142" fill="#1E2A2E">• nightly: walk every device hash chain,</text>
+    <text x="88" y="1160" fill="#1E2A2E">recompute sha256, alert on any break</text>
+    <text x="76" y="1182" fill="#1E2A2E">• daily: calibration expiry (90/30/7 days)</text>
+    <text x="76" y="1204" fill="#1E2A2E">• daily: consent expiry → auto-suspend site</text>
+    <text x="76" y="1226" fill="#1E2A2E">• daily: issuance window (clock runs from</text>
+    <text x="88" y="1244" fill="#1E2A2E">period end — it does not wait for ENA)</text>
+    <text x="76" y="1266" fill="#1E2A2E">• daily: ENA data overdue → chase ticket</text>
+    <text x="76" y="1294" font-size="11.5" font-style="italic" fill="#68777B">queue state lives in Postgres too —</text>
+    <text x="76" y="1310" font-size="11.5" font-style="italic" fill="#68777B">one less service to run</text>
+  </g>
+
+  <rect x="520" y="1090" width="620" height="560" rx="12" fill="#FFFFFF" stroke="#256F6D" stroke-width="2.5"/>
+  <text x="540" y="1120" font-size="16" font-weight="700" fill="#256F6D">PostgreSQL 16 (+TimescaleDB when available)</text>
+  <text x="540" y="1140" font-size="12" font-style="italic" fill="#68777B">the rules with teeth live HERE, not in application code</text>
+
+  <g font-size="12">
+    <text x="540" y="1168" fill="#1E2A2E" font-weight="700">Tables:</text>
+    <text x="540" y="1188" fill="#1E2A2E">site · owner · vendor · device · calibration · period · reading_raw · reading_adjustment</text>
+    <text x="540" y="1206" fill="#1E2A2E">reconciliation(+resolutions) · attribute(+transitions) · track_assignment · emission_factor</text>
+    <text x="540" y="1224" fill="#1E2A2E">carbon_calculation · registry_registration · issue_request · certificate_event · contract</text>
+    <text x="540" y="1242" fill="#1E2A2E">data_release_consent · bill_extraction · document · glossary_entry · audit_event · alert</text>
+    <text x="540" y="1260" fill="#1E2A2E">app_account · session · chain_verification_run · payout · vendor_commission · buyer …</text>
+  </g>
+
+  <g font-size="12">
+    <rect x="540" y="1280" width="580" height="52" rx="8" fill="#F8E5E5"/>
+    <text x="554" y="1300" font-weight="700" fill="#94404A">UNIQUE (site_id, period_id) on attribute — the double-counting firewall</text>
+    <text x="554" y="1320" fill="#94404A">one month of energy can NEVER become two certificates (pgTAP-proven in CI)</text>
+
+    <rect x="540" y="1344" width="580" height="52" rx="8" fill="#F8E5E5"/>
+    <text x="554" y="1364" font-weight="700" fill="#94404A">REVOKE UPDATE, DELETE ON reading_raw FROM app_user</text>
+    <text x="554" y="1384" fill="#94404A">the app’s own database role is physically unable to edit history</text>
+
+    <rect x="540" y="1408" width="580" height="52" rx="8" fill="#FAF0D8"/>
+    <text x="554" y="1428" font-weight="700" fill="#846010">INSERT trigger: hash = sha256(prev_hash ‖ device ‖ ts ‖ value ‖ source)</text>
+    <text x="554" y="1448" fill="#846010">every reading chained to the one before — edits leave visible scars</text>
+
+    <rect x="540" y="1472" width="580" height="52" rx="8" fill="#E6F0EF"/>
+    <text x="554" y="1492" font-weight="700" fill="#256F6D">Bitemporal versions (valid_from / valid_to) on contracts, factors, documents</text>
+    <text x="554" y="1512" fill="#256F6D">nothing is overwritten → the auditor’s “as of any past date” time machine</text>
+
+    <text x="540" y="1548" fill="#1E2A2E" font-weight="700">Roles:</text>
+    <text x="540" y="1568" fill="#1E2A2E">app runs as app_user (limited) · migrations run as admin · pgTAP tests prove the grants</text>
+    <text x="540" y="1594" fill="#68777B" font-size="11.5" font-style="italic">reading_raw is a Timescale hypertable where the extension exists; plain table otherwise</text>
+  </g>
+
+  <!-- arrows to postgres -->
+  <line x1="275" y1="1020" x2="275" y2="1086" stroke="#3D4C51" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="285" y="1060" font-size="11.5" fill="#3D4C51">verification results, sweeps</text>
+  <path d="M 460 1215 L 516 1215" fill="none" stroke="#3D4C51" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="392" y="1360" font-size="11.5" fill="#3D4C51"></text>
+  <line x1="830" y1="1020" x2="830" y2="1086" stroke="#256F6D" stroke-width="2.5" marker-end="url(#arrTeal)"/>
+  <text x="840" y="1050" font-size="11.5" fill="#256F6D">all reads and writes — Drizzle SQL as app_user</text>
+  <text x="840" y="1068" font-size="11.5" fill="#256F6D">(typed against the same schema the migrations built)</text>
+</svg>
