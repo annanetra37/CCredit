@@ -5,9 +5,30 @@
  */
 import { InfoTip } from "./InfoTip";
 
-export type Source = "MANUAL" | "METER" | "INVERTER_API";
+export type Source =
+  | "ENA_BILLING"
+  | "MANUAL"
+  | "METER"
+  | "OWNER_STATEMENT"
+  | "INVERTER_API";
 
 export function SourceBadge({ source }: { source: Source }) {
+  if (source === "ENA_BILLING") {
+    // The record of account (R1 §4.1).
+    return (
+      <span className="inline-flex items-center gap-0.5 rounded-badge bg-mist px-3 py-0.5 text-xs font-bold text-teal-600">
+        ENA bill
+        <InfoTip termKey="ena_billing" />
+      </span>
+    );
+  }
+  if (source === "OWNER_STATEMENT") {
+    return (
+      <span className="inline-flex items-center rounded-badge bg-surface-2 px-3 py-0.5 text-xs font-semibold text-ink-700">
+        Owner bill
+      </span>
+    );
+  }
   if (source === "MANUAL") {
     return (
       <span className="inline-flex items-center gap-0.5 rounded-badge border-2 border-amber-700 bg-butter px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-amber-700">

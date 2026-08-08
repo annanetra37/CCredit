@@ -33,6 +33,7 @@
     "sites": "Sites",
     "devices": "Devices",
     "readings": "Readings",
+    "enaData": "ENA data",
     "manualEntry": "Manual entry",
     "bulkImport": "Bulk import",
     "reconciliation": "Reconciliation",

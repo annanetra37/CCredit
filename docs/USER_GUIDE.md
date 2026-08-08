@@ -94,6 +94,34 @@ who held the pen.
 
 ---
 
+## 5B. ENA billing data: the official numbers (Revision R1)
+
+**Clear:** The portal's official generation record comes from ENA (the
+electricity network) billing data, with the owner's recorded consent — ENA
+already operates a certified, sealed meter at every grid connection. Bills
+arrive by feed, file drop, per-site request or owner upload; the parser
+extracts account, period, export and import; and a human analyst confirms
+every figure before it becomes a reading (low-confidence extractions sort to
+the top of the queue). ENA data lags 30–45 days, so periods show
+AWAITING_SOURCE and owners see clearly-marked provisional inverter figures
+until the official number lands. The coverage dashboard shows every site and
+period as received, awaited or overdue.
+
+**ELI5:** Instead of us installing a second electricity meter on your roof,
+we simply ask the electric company — with your written permission — for the
+official number they already measure (they have to: they pay you for it).
+Their letter takes about a month to arrive, so meanwhile the portal shows
+your inverter's estimate with a big "not official yet" sticker. When the
+official letter comes, a human reads it, checks the numbers, and only then do
+they count. Nothing a computer guessed ever becomes a certificate by itself.
+
+**Why the app number and the official number never match:** your inverter
+counts everything the panels made; ENA counts only what left your building
+into the grid. The difference is what you used yourself — good for your
+electricity bill, but not what certificates are issued on. The portal knows
+this and compares the two numbers intelligently instead of raising a false
+alarm.
+
 ## 6. Reconciliation: making the numbers agree
 
 **Clear:** Reconciliation compares the three sources pairwise. Within

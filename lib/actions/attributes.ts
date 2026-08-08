@@ -7,6 +7,8 @@ import { getDb, tables } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import { hasValidCalibration } from "@/lib/domain/calibration";
+import { hasValidEvidenceBasis } from "@/lib/domain/evidence";
+import { DEFAULT_SOURCE_RANK } from "@/lib/domain/sources";
 import {
   validateTransition,
   type AttrStatus,
@@ -89,10 +91,12 @@ export async function transitionAttributeAction(formData: FormData): Promise<voi
 
   const [period] = await db.select().from(tables.periods).where(eq(tables.periods.id, attr.periodId));
 
-  // Guard inputs for ALLOCATED (S7-2): period reconciled, contract valid
-  // across period, calibration valid across period, track assigned.
+  // Guard inputs for ALLOCATED (S7-2, revised by R1 §7): period reconciled,
+  // contract valid across period, EVIDENCE BASIS valid across period
+  // (data-release consent — or calibration where our own METER is promoted
+  // to record of account), track assigned.
   let contractValid = false;
-  let calibrationValid = false;
+  let evidenceValid = false;
   if (period) {
     const contracts = await db
       .select()
@@ -105,25 +109,45 @@ export async function transitionAttributeAction(formData: FormData): Promise<voi
         (c.validTo === null || c.validTo >= period.endsOn),
     );
 
-    const meters = await db
-      .select()
-      .from(tables.devices)
-      .where(and(eq(tables.devices.siteId, attr.siteId), eq(tables.devices.type, "METER")));
-    for (const meter of meters) {
-      const cals = await db
+    const [site] = await db.select().from(tables.sites).where(eq(tables.sites.id, attr.siteId));
+    const rank = { ...DEFAULT_SOURCE_RANK, ...(site?.sourceRank ?? {}) };
+    const meterIsRecordOfAccount = rank.METER < rank.ENA_BILLING;
+
+    if (meterIsRecordOfAccount) {
+      const meters = await db
         .select()
-        .from(tables.calibrations)
-        .where(eq(tables.calibrations.deviceId, meter.id));
-      if (
-        hasValidCalibration(
-          cals.map((c) => ({ validFrom: c.validFrom, validTo: c.validTo })),
-          period.startsOn,
-          period.endsOn,
-        )
-      ) {
-        calibrationValid = true;
-        break;
+        .from(tables.devices)
+        .where(and(eq(tables.devices.siteId, attr.siteId), eq(tables.devices.type, "METER")));
+      for (const meter of meters) {
+        const cals = await db
+          .select()
+          .from(tables.calibrations)
+          .where(eq(tables.calibrations.deviceId, meter.id));
+        if (
+          hasValidCalibration(
+            cals.map((c) => ({ validFrom: c.validFrom, validTo: c.validTo })),
+            period.startsOn,
+            period.endsOn,
+          )
+        ) {
+          evidenceValid = true;
+          break;
+        }
       }
+    } else {
+      const consents = await db
+        .select()
+        .from(tables.dataReleaseConsents)
+        .where(eq(tables.dataReleaseConsents.siteId, attr.siteId));
+      evidenceValid = hasValidEvidenceBasis(
+        consents.map((c) => ({
+          signedAt: c.signedAt,
+          expiresAt: c.expiresAt,
+          revokedAt: c.revokedAt,
+        })),
+        period.startsOn,
+        period.endsOn,
+      );
     }
   }
 
@@ -133,7 +157,7 @@ export async function transitionAttributeAction(formData: FormData): Promise<voi
     guards: {
       periodStatus: period?.status ?? "OPEN",
       contractValidAcrossPeriod: contractValid,
-      calibrationValidAcrossPeriod: calibrationValid,
+      evidenceBasisValidAcrossPeriod: evidenceValid,
       track: attr.track,
     },
   });

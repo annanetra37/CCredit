@@ -52,10 +52,22 @@ export const roleEnum = pgEnum("user_role", [
   "auditor",
 ]);
 
+// R1 §4.1: the source hierarchy inverted — ENA billing is the record of
+// account. Ranking lives in site.source_rank, not enum order.
 export const readingSourceEnum = pgEnum("reading_source", [
   "MANUAL",
   "METER",
   "INVERTER_API",
+  "ENA_BILLING",
+  "OWNER_STATEMENT",
+]);
+
+// R1 §4.2: every reading declares WHAT it measures.
+export const measuredQuantityEnum = pgEnum("measured_quantity", [
+  "GENERATION",
+  "EXPORT",
+  "IMPORT",
+  "CONSUMPTION",
 ]);
 
 export const siteStatusEnum = pgEnum("site_status", [
@@ -96,6 +108,7 @@ export const deviceTypeEnum = pgEnum("device_type", [
 
 export const periodStatusEnum = pgEnum("period_status", [
   "OPEN",
+  "AWAITING_SOURCE", // R1 §4.3: ENA data lags 30–45 days; waiting is a state, not a bug
   "RECONCILED",
   "DISPUTED",
   "VOID",
@@ -131,6 +144,11 @@ export const resolutionOutcomeEnum = pgEnum("resolution_outcome", [
   "BILLING_LAG",
   "DATA_ERROR",
   "ACCEPTED_WITH_VARIANCE",
+  // R1 S6-3R additions
+  "ENA_ESTIMATED_READING",
+  "INVERTER_OFFLINE",
+  "SITE_LOAD_CHANGE",
+  "EXTRACTION_ERROR",
 ]);
 
 export const documentClassEnum = pgEnum("document_class", [
@@ -243,6 +261,13 @@ export const sites = pgTable("site", {
   }),
   toleranceOverrideReason: text("tolerance_override_reason"),
   cohort: text("cohort"),
+  // R1: ENA identification (S3B-4), certified quantity (§4.2), per-site
+  // source ranking (§4.1) and acquisition mode (S3B-2).
+  enaAccountNumber: text("ena_account_number"),
+  connectionPointId: text("connection_point_id"),
+  certifies: measuredQuantityEnum("certifies").notNull().default("EXPORT"),
+  sourceRank: jsonb("source_rank").$type<Record<string, number>>(),
+  acquisitionMode: text("acquisition_mode").notNull().default("OWNER_UPLOAD"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -433,6 +458,7 @@ export const readingRaw = pgTable(
     registerWh: numeric("register_wh", { precision: 18, scale: 3 }),
     intervalWh: numeric("interval_wh", { precision: 18, scale: 3 }).notNull(),
     source: readingSourceEnum("source").notNull(),
+    quantity: measuredQuantityEnum("quantity").notNull().default("EXPORT"),
     enteredBy: uuid("entered_by"),
     prevHash: bytea("prev_hash"),
     hash: bytea("hash").notNull(),
@@ -482,6 +508,12 @@ export const reconciliations = pgTable("reconciliation", {
   adoptedSource: readingSourceEnum("adopted_source"),
   tolerancePct: numeric("tolerance_pct", { precision: 5, scale: 2 }).notNull(),
   maxVariancePct: numeric("max_variance_pct", { precision: 8, scale: 4 }),
+  // R1 S6-1R: quantity-aware figures and the soft-rule FLAGGED outcome.
+  generationMwh: numeric("generation_mwh", { precision: 14, scale: 4 }),
+  exportMwh: numeric("export_mwh", { precision: 14, scale: 4 }),
+  selfConsumedMwh: numeric("self_consumed_mwh", { precision: 14, scale: 4 }),
+  flagged: boolean("flagged").notNull().default(false),
+  flagReasons: jsonb("flag_reasons").$type<string[]>(),
   outcome: periodStatusEnum("outcome").notNull(),
   detail: jsonb("detail"),
   runBy: uuid("run_by"),
@@ -726,6 +758,63 @@ export const vendorCommissions = pgTable("vendor_commission", {
   periodLabel: text("period_label").notNull(),
   amountAmd: numeric("amount_amd", { precision: 14, scale: 2 }).notNull(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
+/* R1 Sprint 3B — ENA data acquisition                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * S3B-1: explicit, separately acknowledged data-release consent. A site
+ * cannot enter the acquisition flow without one; allocation requires consent
+ * covering the whole period (hasValidEvidenceBasis). Revocation stops future
+ * acquisition but does not invalidate historic attributes.
+ */
+export const dataReleaseConsents = pgTable("data_release_consent", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  siteId: uuid("site_id")
+    .notNull()
+    .references(() => sites.id),
+  scope: text("scope").notNull().default("ENA_BILLING_DATA"),
+  signatoryName: text("signatory_name").notNull(),
+  signedAt: timestamp("signed_at", { withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  revocationReason: text("revocation_reason"),
+  documentId: uuid("document_id"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
+ * S3B-3: bill parsing with mandatory human confirmation. Extraction is never
+ * auto-accepted — every parsed record waits here until an analyst confirms,
+ * corrects (recording the original values and reason) or rejects.
+ */
+export const billExtractions = pgTable("bill_extraction", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  siteId: uuid("site_id").references(() => sites.id),
+  enaAccountNumber: text("ena_account_number"),
+  documentId: uuid("document_id"),
+  filename: text("filename"),
+  periodStart: timestamp("period_start", { withTimezone: true }),
+  periodEnd: timestamp("period_end", { withTimezone: true }),
+  exportKwh: numeric("export_kwh", { precision: 18, scale: 3 }),
+  importKwh: numeric("import_kwh", { precision: 18, scale: 3 }),
+  tariff: text("tariff"),
+  confidence: numeric("confidence", { precision: 4, scale: 3 })
+    .notNull()
+    .default("0"),
+  status: text("status").notNull().default("PENDING"), // PENDING | CONFIRMED | CORRECTED | REJECTED
+  originalValues: jsonb("original_values"),
+  correctionReason: text("correction_reason"),
+  reviewedBy: uuid("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  readingIds: jsonb("reading_ids").$type<number[]>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -17,6 +17,8 @@ interface Draft {
   name: string;
   ownerLegalName: string;
   ownerTaxId: string;
+  enaAccountNumber: string;
+  connectionPointId: string;
   capacityKw: string;
   inverterMake: string;
   inverterModel: string;
@@ -34,6 +36,8 @@ const empty: Draft = {
   name: "",
   ownerLegalName: "",
   ownerTaxId: "",
+  enaAccountNumber: "",
+  connectionPointId: "",
   capacityKw: "",
   inverterMake: "",
   inverterModel: "",
@@ -110,6 +114,22 @@ export function SiteWizard() {
                 <label className={label}>
                   Owner tax ID
                   <input className={input} value={draft.ownerTaxId} onChange={(e) => set("ownerTaxId", e.target.value)} />
+                </label>
+                <label className={label}>
+                  <span>
+                    ENA account number <InfoTip termKey="ena_billing" />
+                  </span>
+                  <input
+                    className={`${input} numeric`}
+                    inputMode="numeric"
+                    placeholder="from the electricity bill"
+                    value={draft.enaAccountNumber}
+                    onChange={(e) => set("enaAccountNumber", e.target.value)}
+                  />
+                </label>
+                <label className={label}>
+                  Connection point ID (optional)
+                  <input className={`${input} numeric`} value={draft.connectionPointId} onChange={(e) => set("connectionPointId", e.target.value)} />
                 </label>
                 <label className="flex min-h-11 items-center gap-2 text-sm font-medium text-ink-700">
                   <input
@@ -202,6 +222,7 @@ export function SiteWizard() {
                 {[
                   ["Site", draft.name],
                   ["Owner", `${draft.ownerLegalName} (${draft.ownerTaxId})`],
+                  ["ENA account", draft.enaAccountNumber || "—"],
                   ["Capacity", `${draft.capacityKw} kW`],
                   ["Location", draft.lat ? `${draft.lat}, ${draft.lon}` : draft.address || "—"],
                   ["Mode", draft.isSandbox ? "🧪 Sandbox" : "Production"],

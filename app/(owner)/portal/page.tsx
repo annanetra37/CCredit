@@ -36,6 +36,18 @@ export default async function OwnerPortalPage() {
           .orderBy(desc(tables.periods.startsOn))
       : [];
 
+  // S3B-5: months whose official ENA figure has not arrived yet render as
+  // provisional — clearly marked, never in the ledger.
+  const awaitingPeriods =
+    siteIds.length > 0
+      ? (
+          await db
+            .select()
+            .from(tables.periods)
+            .where(inArray(tables.periods.siteId, siteIds))
+        ).filter((p) => p.status === "AWAITING_SOURCE" || p.status === "OPEN")
+      : [];
+
   const payouts = user.ownerId
     ? await db
         .select()
@@ -71,8 +83,8 @@ export default async function OwnerPortalPage() {
         </DataCard>
       </div>
 
-      <DataCard layer="energy" title="By month / Ամսական" infoKey="vintage">
-        {attrs.length === 0 ? (
+      <DataCard layer="energy" title="By month / Ամսական" infoKey="provisional_figure">
+        {attrs.length === 0 && awaitingPeriods.length === 0 ? (
           <p className="text-sm text-ink-700">
             No data yet — each month appears here once your site is measured. /
             Դեռ տվյալներ չկան․ չափումից հետո ամեն ամիս այստեղ կհայտնվի:
@@ -84,6 +96,15 @@ export default async function OwnerPortalPage() {
                 <span className="numeric">{period.startsOn.toISOString().slice(0, 7)}</span>
                 <span className="numeric font-semibold">{Number(attr.mwh).toFixed(2)} MWh</span>
                 <StatusPill status={attr.status} />
+              </li>
+            ))}
+            {awaitingPeriods.map((p) => (
+              <li key={p.id} className="flex items-center justify-between py-2 opacity-80">
+                <span className="numeric">{p.startsOn.toISOString().slice(0, 7)}</span>
+                <span className="rounded-badge bg-butter px-2 py-0.5 text-xs font-semibold text-amber-700">
+                  ~ provisional — awaiting official figure
+                </span>
+                <StatusPill status="AWAITING_SOURCE" />
               </li>
             ))}
           </ul>

@@ -4,8 +4,16 @@ Turns solar electricity readings into saleable certificates — I-RECs (via a
 registry API) and VCUs (via an auditor-verified evidence package) — with an
 audit trail that holds up years later.
 
-Built from the *Portal Build Guide & Sprint Backlog*. Three things make this
-different from a normal CRUD app:
+Built from the *Portal Build Guide & Sprint Backlog*, as revised by
+**Revision R1 (utility-data first)**: generation data is sourced from ENA
+billing records (the record of account) rather than our own metering estate.
+Inverter data powers the owner dashboard as a provisional preview; the
+quantity model (generation vs export vs self-consumption) drives
+reconciliation; and a data-release consent is the evidentiary basis for every
+certificate. **R1's blocking dependency (Issuer + ENA pilot) is unresolved —
+see `docs/DISCOVERY_SPIKE.md` before committing to dates.**
+
+Three things make this different from a normal CRUD app:
 
 1. **The data is evidence.** Readings are written once and never updated. An
    auditor can reconstruct the system as it stood on any past date.
@@ -97,8 +105,10 @@ pg_prove -d $DATABASE_URL tests/pgtap/*.sql   # constraint proofs (needs pgtap)
 | Raw readings append-only | `REVOKE UPDATE, DELETE ON reading_raw FROM app_user` (drizzle/0001) + pgTAP test |
 | One MWh, one attribute | `UNIQUE (site_id, period_id)` + pgTAP double-allocation test (tests/pgtap/001) |
 | Hash chain per device | Insert trigger (drizzle/0001) + nightly `jobs/verify-chains.ts` + on-demand from the auditor console |
-| Meter beats inverter | `lib/domain/reconcile` adopts METER as record of account |
-| Expired calibration blocks issuance | `hasValidCalibration` guard on the ALLOCATED transition, unit tested |
+| ENA is the record of account (R1) | per-site `source_rank` + `recordOfAccountSource`; sources compared by measured quantity, not blindly |
+| Provisional never enters the ledger (R1) | `canEnterLedger` guard, unit tested — inverter figures are owner UX, not evidence |
+| No consent, no certificate (R1) | `hasValidEvidenceBasis` guard on the ALLOCATED transition (calibration guard retained for meter-promoted sites) |
+| Extraction never auto-accepted (R1) | every parsed bill waits in a human confirmation queue |
 | Every figure traces to source | `carbon_calculation.input_reading_ids` + factor version FK; TraceLink UI |
 | Point-in-time reconstruction | bitemporal `valid_from/valid_to` on mutable entities; auditor console `asOf` |
 | Sandbox never reaches a registry | `assertNoSandboxAttributes` throws inside every registry client before any I/O |

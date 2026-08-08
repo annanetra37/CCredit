@@ -20,6 +20,7 @@ export default async function OpsLayout({
   const nav: Array<[string, string]> = [
     ["/dashboard", t("dashboard")],
     ["/sites", t("sites")],
+    ["/ena", t("enaData")],
     ["/readings/manual", t("manualEntry")],
     ["/readings/import", t("bulkImport")],
     ["/reconciliation", t("reconciliation")],

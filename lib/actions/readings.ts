@@ -9,20 +9,20 @@ import { getCurrentUser } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 
 /**
- * Manual reading entry (S4-2). The three figures of a period — meter export,
- * inverter total, utility bill — are persisted as MANUAL readings on the
+ * Manual reading entry (S4-2, revised by R1): now the OPERATIONAL FALLBACK
+ * for late or missing ENA data, not just a test harness. The figures are
+ * quantity-aware — export (what the ENA bill will eventually confirm) and
+ * generation (the inverter figure) — persisted as MANUAL readings on the
  * site's meter device (distinct timestamps inside the period close window so
- * the per-device hash chain stays strictly ordered), and the period is
- * created OPEN, ready for reconciliation.
+ * the per-device hash chain stays strictly ordered).
  *
  * Available only on sandbox sites unless the user holds the admin role.
  */
 const manualEntrySchema = z.object({
   siteId: z.string().uuid(),
   month: z.string().regex(/^\d{4}-\d{2}$/),
-  meterMwh: z.coerce.number().min(0),
-  inverterMwh: z.coerce.number().min(0).optional(),
-  utilityMwh: z.coerce.number().min(0).optional(),
+  exportMwh: z.coerce.number().min(0),
+  generationMwh: z.coerce.number().min(0).optional(),
   auxiliaryMwh: z.coerce.number().min(0).optional(),
 });
 
@@ -69,12 +69,17 @@ export async function manualEntryAction(formData: FormData): Promise<void> {
       .returning();
   }
 
-  // Three roles → three distinct close-of-period timestamps, so the unique
-  // (device, ts, source) index distinguishes them and the chain stays ordered.
-  const figures: Array<{ offsetMs: number; mwh: number | undefined; role: string }> = [
-    { offsetMs: 1000, mwh: data.meterMwh, role: "meter" },
-    { offsetMs: 2000, mwh: data.inverterMwh, role: "inverter" },
-    { offsetMs: 3000, mwh: data.utilityMwh, role: "utility" },
+  // Distinct close-of-period timestamps keep the unique (device, ts, source)
+  // index and the hash chain strictly ordered. Quantity declares what each
+  // figure measures (R1 §4.2).
+  const figures: Array<{
+    offsetMs: number;
+    mwh: number | undefined;
+    quantity: "EXPORT" | "GENERATION";
+    role: string;
+  }> = [
+    { offsetMs: 1000, mwh: data.exportMwh, quantity: "EXPORT", role: "export" },
+    { offsetMs: 2000, mwh: data.generationMwh, quantity: "GENERATION", role: "generation" },
   ];
 
   const readingIds: Record<string, number> = {};
@@ -89,6 +94,7 @@ export async function manualEntryAction(formData: FormData): Promise<void> {
         ts,
         intervalWh: String(f.mwh * 1_000_000),
         source: "MANUAL",
+        quantity: f.quantity,
         enteredBy: user.id,
         // hash/prevHash are computed by the database trigger; the values
         // here are placeholders the trigger overwrites.
@@ -111,7 +117,7 @@ export async function manualEntryAction(formData: FormData): Promise<void> {
 }
 
 /**
- * Bulk manual import (S4-3): CSV of `month,meter_mwh,inverter_mwh,utility_mwh`.
+ * Bulk manual import (S4-3): CSV of `month,export_mwh,generation_mwh`.
  * All rows commit or none do; the batch is one audit event with row count and
  * file hash.
  */
@@ -138,23 +144,21 @@ export async function bulkImportAction(formData: FormData): Promise<void> {
   }
 
   const lines = csv.trim().split(/\r?\n/);
-  const rows: Array<{ month: string; meter: number; inverter?: number; utility?: number }> = [];
+  const rows: Array<{ month: string; export: number; generation?: number }> = [];
   const rejected: Array<{ line: number; reason: string }> = [];
 
   lines.forEach((line, i) => {
     if (i === 0 && /month/i.test(line)) return; // header
-    const [month, meterS, inverterS, utilityS] = line.split(",").map((s) => s?.trim());
+    const [month, exportS, generationS] = line.split(",").map((s) => s?.trim());
     const rowSchema = z.object({
       month: z.string().regex(/^\d{4}-\d{2}$/),
-      meter: z.coerce.number().min(0),
-      inverter: z.coerce.number().min(0).optional(),
-      utility: z.coerce.number().min(0).optional(),
+      export: z.coerce.number().min(0),
+      generation: z.coerce.number().min(0).optional(),
     });
     const parsed = rowSchema.safeParse({
       month,
-      meter: meterS,
-      inverter: inverterS || undefined,
-      utility: utilityS || undefined,
+      export: exportS,
+      generation: generationS || undefined,
     });
     if (!parsed.success) {
       rejected.push({ line: i + 1, reason: parsed.error.issues[0]?.message ?? "invalid" });
@@ -183,9 +187,8 @@ export async function bulkImportAction(formData: FormData): Promise<void> {
         .onConflictDoNothing();
 
       const figures = [
-        { offsetMs: 1000, mwh: r.meter },
-        { offsetMs: 2000, mwh: r.inverter },
-        { offsetMs: 3000, mwh: r.utility },
+        { offsetMs: 1000, mwh: r.export, quantity: "EXPORT" as const },
+        { offsetMs: 2000, mwh: r.generation, quantity: "GENERATION" as const },
       ];
       for (const f of figures) {
         if (f.mwh == null) continue;
@@ -197,6 +200,7 @@ export async function bulkImportAction(formData: FormData): Promise<void> {
             ts: new Date(endsOn.getTime() - f.offsetMs),
             intervalWh: String(f.mwh * 1_000_000),
             source: "MANUAL",
+            quantity: f.quantity,
             enteredBy: user.id,
             hash: Buffer.alloc(0),
           })

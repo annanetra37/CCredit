@@ -563,6 +563,77 @@ const entries: SeedEntry[] = [
       why: "Վկայականները իրավական հայտարարություններ են: Երբ որևէ մեկը հարցնի «ինչու է այս թիվը 43.6», աուդիտի հետքը կպատասխանի՝ առանց որևէ մեկի հիշողության վրա հույս դնելու:",
     },
   },
+  /* ---------------------------------------------------- Revision R1 */
+  {
+    key: "ena_billing",
+    group: "measurement",
+    related: ["net_export", "data_release_consent", "provisional_figure"],
+    en: {
+      term: "ENA billing data",
+      short: "The electric company's official record of what your site exported.",
+      eli5: "ENA (the Armenian electricity network) already has a certified, sealed meter at every grid-connected site — they installed it because they pay you for exported power. With your consent, we use their billing records as the official figure instead of installing a second meter.",
+      why: "The ENA figure is the record of account: it is what certificates are issued on. It arrives 30–45 days after the month ends, which is why your app shows provisional numbers first.",
+      example: "Your inverter app says 8.0 MWh generated; the ENA bill says 3.2 MWh exported. Certificates are issued on the 3.2.",
+    },
+    hy: {
+      term: "ՀԷՑ-ի հաշվարկային տվյալներ",
+      short: "Էլեկտրացանցի պաշտոնական գրառումը, թե որքան է ձեր կայանը արտահանել:",
+      eli5: "ՀԷՑ-ը (Հայաստանի էլեկտրական ցանցերը) արդեն ունի հավաստագրված, կնքված հաշվիչ ամեն ցանցին միացված կայանում — նրանք տեղադրել են այն, որովհետև վճարում են ձեզ արտահանված էներգիայի համար: Ձեր համաձայնությամբ մենք օգտագործում ենք նրանց հաշվարկային տվյալները՝ երկրորդ հաշվիչ տեղադրելու փոխարեն:",
+      why: "ՀԷՑ-ի թիվը հաշվառման հիմքն է․ հենց դրա վրա են թողարկվում վկայականները: Այն գալիս է ամսվա ավարտից 30–45 օր հետո — ահա թե ինչու ձեր հավելվածը սկզբում ցույց է տալիս նախնական թվեր:",
+      example: "Ինվերտորի հավելվածն ասում է՝ 8.0 ՄՎտ·ժ արտադրված; ՀԷՑ-ի հաշիվը՝ 3.2 ՄՎտ·ժ արտահանված: Վկայականները թողարկվում են 3.2-ի վրա:",
+    },
+  },
+  {
+    key: "self_consumption",
+    group: "measurement",
+    related: ["ena_billing", "net_export", "reconciliation"],
+    en: {
+      term: "Self-consumption",
+      short: "Solar power your site used itself instead of sending to the grid.",
+      eli5: "Your panels made 8 units; your ovens and lights used 4.8 of them on the spot; only 3.2 crossed the meter into the grid. Those 4.8 are self-consumption. It is a good thing — it saves you money — but it is not export, so it is not what certificates are issued on.",
+      why: "This is why the inverter app and the ENA bill will NEVER match, and why the portal compares them intelligently instead of calling every difference a dispute.",
+    },
+    hy: {
+      term: "Սեփական սպառում (ինքնասպառում)",
+      short: "Արևային էներգիա, որ կայանն ինքն օգտագործեց՝ ցանց ուղարկելու փոխարեն:",
+      eli5: "Ձեր վահանակները արտադրեցին 8 միավոր; ձեր վառարաններն ու լույսերը տեղում օգտագործեցին 4.8-ը; միայն 3.2-ն անցավ հաշվիչով դեպի ցանց: Այդ 4.8-ը ինքնասպառումն է: Դա լավ բան է — խնայում է ձեր գումարը — բայց դա արտահանում չէ, ուստի վկայականները դրա վրա չեն թողարկվում:",
+      why: "Ահա թե ինչու ինվերտորի հավելվածը և ՀԷՑ-ի հաշիվը ԵՐԲԵՔ չեն համընկնի, և ինչու է պորտալը դրանք համեմատում խելամտորեն՝ ամեն տարբերությունը վեճ չհամարելով:",
+    },
+  },
+  {
+    key: "provisional_figure",
+    group: "system",
+    related: ["ena_billing", "self_consumption"],
+    en: {
+      term: "Provisional figure",
+      short: "An early estimate from your inverter, before the official number arrives.",
+      eli5: "The official ENA figure takes 30–45 days to arrive. Until then, the portal shows what your inverter reported — a useful preview, clearly marked as provisional. When the official figure lands, it replaces the preview and you are notified.",
+      why: "Provisional figures are display-only: they can never become certificates. Only the confirmed ENA record enters the ledger.",
+    },
+    hy: {
+      term: "Նախնական թիվ",
+      short: "Վաղ գնահատական ինվերտորից, մինչև պաշտոնական թվի ժամանումը:",
+      eli5: "Պաշտոնական ՀԷՑ-ի թիվը գալիս է 30–45 օրում: Մինչ այդ պորտալը ցույց է տալիս, ինչ հայտնել է ձեր ինվերտորը — օգտակար նախադիտում՝ հստակ նշված որպես նախնական: Երբ պաշտոնական թիվը գա, այն փոխարինում է նախադիտմանը, և դուք ծանուցվում եք:",
+      why: "Նախնական թվերը միայն ցուցադրման համար են․ դրանք երբեք չեն կարող վկայական դառնալ: Միայն հաստատված ՀԷՑ-ի գրառումն է մտնում մատյան:",
+    },
+  },
+  {
+    key: "data_release_consent",
+    group: "system",
+    related: ["ena_billing", "audit_trail"],
+    en: {
+      term: "Data-release consent",
+      short: "Your written permission for us to obtain your ENA billing data.",
+      eli5: "Your electricity records belong to you. Before we can ask ENA for them, you sign a separate, clearly-worded permission saying exactly what data is shared and with whom. You can revoke it at any time — revocation stops future data collection but does not undo certificates already issued.",
+      why: "Without a valid consent covering a month, the portal physically refuses to create a certificate for that month — it is a period we have no right to sell.",
+    },
+    hy: {
+      term: "Տվյալների տրամադրման համաձայնություն",
+      short: "Ձեր գրավոր թույլտվությունը՝ ՀԷՑ-ից ձեր տվյալները ստանալու համար:",
+      eli5: "Ձեր էլեկտրաէներգիայի տվյալները ձերն են: Նախքան ՀԷՑ-ից դրանք խնդրելը՝ դուք ստորագրում եք առանձին, հստակ ձևակերպված թույլտվություն, որտեղ գրված է, թե կոնկրետ ինչ տվյալ է կիսվում և ում հետ: Կարող եք ցանկացած պահի չեղարկել — չեղարկումը դադարեցնում է ապագա հավաքագրումը, բայց չի չեղարկում արդեն թողարկված վկայականները:",
+      why: "Առանց ամիսը ծածկող վավեր համաձայնության՝ պորտալը ֆիզիկապես հրաժարվում է այդ ամսվա համար վկայական ստեղծել — դա ժամանակաշրջան է, որը վաճառելու իրավունք չունենք:",
+    },
+  },
   {
     key: "point_in_time",
     group: "system",

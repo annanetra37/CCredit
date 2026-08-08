@@ -1,20 +1,26 @@
 "use server";
 
-import { and, asc, eq, gte, lt } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getDb, tables } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { writeAudit } from "@/lib/audit";
 import {
-  DEFAULT_TOLERANCE_PCT,
-  reconcile,
-} from "@/lib/domain/reconcile/reconcile";
+  learnSelfConsumptionBand,
+  reconcileQuantities,
+} from "@/lib/domain/reconcile/quantity";
+import { expectedMonthlyYieldMwh } from "@/lib/domain/yield/expected-yield";
+import {
+  canEnterLedger,
+  recordOfAccountSource,
+  type SourceKind,
+} from "@/lib/domain/sources";
 
 /**
- * Run reconciliation for a period (S6-1): aggregate per-source figures from
- * raw readings, run the pure engine, persist the result, move the period,
- * and create/advance the period's attribute row.
+ * Run reconciliation for a period — Revision R1, quantity-aware (S6-1R).
+ * Sources are compared according to WHAT they measure: ENA export vs inverter
+ * generation, with self-consumption modelled instead of flagged as a dispute.
  */
 export async function runReconciliationAction(formData: FormData): Promise<void> {
   const user = await getCurrentUser();
@@ -29,9 +35,6 @@ export async function runReconciliationAction(formData: FormData): Promise<void>
   const [site] = await db.select().from(tables.sites).where(eq(tables.sites.id, period.siteId));
   if (!site) redirect("/reconciliation");
 
-  // Aggregate readings inside the window. Manual entry encodes the three
-  // figure roles as close-of-period timestamp offsets (see readings.ts);
-  // device sources map directly once hardware lands in Sprint 13.
   const rows = await db
     .select()
     .from(tables.readingRaw)
@@ -44,55 +47,116 @@ export async function runReconciliationAction(formData: FormData): Promise<void>
     )
     .orderBy(asc(tables.readingRaw.ts));
 
+  // Aggregate by measured quantity; export additionally by source so the
+  // record of account is chosen by rank, not by arrival order.
   const endMs = period.endsOn.getTime();
-  let meterMwh: number | null = null;
-  let inverterMwh: number | null = null;
-  let utilityMwh: number | null = null;
+  const exportBySource = new Map<SourceKind, number>();
+  let generationMwh: number | null = null;
   const inputReadingIds: number[] = [];
 
   for (const r of rows) {
     const mwh = Number(r.intervalWh) / 1_000_000;
     inputReadingIds.push(r.id);
-    if (r.source === "METER") meterMwh = (meterMwh ?? 0) + mwh;
-    else if (r.source === "INVERTER_API") inverterMwh = (inverterMwh ?? 0) + mwh;
-    else {
-      // MANUAL: role encoded by close-of-period offset
+
+    // Legacy pre-R1 manual rows carried role in the ts offset; honour both.
+    let quantity = r.quantity;
+    if (r.source === "MANUAL" && quantity === "EXPORT") {
       const offset = endMs - r.ts.getTime();
-      if (offset === 1000) meterMwh = (meterMwh ?? 0) + mwh;
-      else if (offset === 2000) inverterMwh = (inverterMwh ?? 0) + mwh;
-      else if (offset === 3000) utilityMwh = (utilityMwh ?? 0) + mwh;
-      else meterMwh = (meterMwh ?? 0) + mwh;
+      if (offset === 2000) quantity = "GENERATION";
+    }
+    if (r.source === "INVERTER_API") quantity = "GENERATION";
+
+    if (quantity === "EXPORT") {
+      const src = r.source as SourceKind;
+      exportBySource.set(src, (exportBySource.get(src) ?? 0) + mwh);
+    } else if (quantity === "GENERATION") {
+      generationMwh = (generationMwh ?? 0) + mwh;
     }
   }
 
-  const tolerancePct = site.reconcileTolerancePct
-    ? Number(site.reconcileTolerancePct)
-    : DEFAULT_TOLERANCE_PCT;
+  const siteRank = site.sourceRank ?? null;
+  const adoptedSource = recordOfAccountSource([...exportBySource.keys()], siteRank);
+  const exportMwh = adoptedSource != null ? (exportBySource.get(adoptedSource) ?? null) : null;
 
-  const result = reconcile({
-    meterMwh,
-    inverterMwh,
-    utilityMwh,
-    tolerancePct,
+  // Learned self-consumption band from prior reconciliations (S6-1R).
+  const history = await db
+    .select({ recon: tables.reconciliations, p: tables.periods })
+    .from(tables.reconciliations)
+    .innerJoin(tables.periods, eq(tables.reconciliations.periodId, tables.periods.id))
+    .where(eq(tables.periods.siteId, site.id))
+    .orderBy(desc(tables.reconciliations.createdAt))
+    .limit(24);
+  const ratios = history
+    .filter((h) => h.recon.generationMwh != null && h.recon.selfConsumedMwh != null)
+    .map((h) => Number(h.recon.selfConsumedMwh) / Number(h.recon.generationMwh))
+    .filter((x) => Number.isFinite(x));
+  const band = learnSelfConsumptionBand(ratios);
+
+  const prev = history.find(
+    (h) => h.recon.exportMwh != null && h.recon.generationMwh != null && Number(h.recon.generationMwh) > 0,
+  );
+  const previousExportRatio = prev
+    ? Number(prev.recon.exportMwh) / Number(prev.recon.generationMwh)
+    : null;
+
+  // Expected yield model (S6-2R).
+  const observedSameMonth = history
+    .filter(
+      (h) =>
+        h.p.startsOn.getUTCMonth() === period.startsOn.getUTCMonth() &&
+        h.recon.generationMwh != null,
+    )
+    .map((h) => Number(h.recon.generationMwh));
+  const modelledYieldMwh = site.capacityKw
+    ? expectedMonthlyYieldMwh({
+        capacityKw: Number(site.capacityKw),
+        tiltDeg: site.tiltDeg != null ? Number(site.tiltDeg) : null,
+        orientationDeg: site.orientationDeg != null ? Number(site.orientationDeg) : null,
+        month: period.startsOn.getUTCMonth(),
+        observedSameMonthMwh: observedSameMonth,
+      })
+    : null;
+
+  const result = reconcileQuantities({
+    exportMwh,
+    generationMwh,
+    expectedSelfConsumptionBand: band,
+    modelledYieldMwh,
+    previousExportRatio,
     supervisorApproved,
   });
 
-  const outcome = result.outcome === "RECONCILED" ? "RECONCILED" : result.outcome === "DISPUTED" ? "DISPUTED" : "OPEN";
+  const outcome =
+    result.outcome === "RECONCILED"
+      ? "RECONCILED"
+      : result.outcome === "DISPUTED"
+        ? "DISPUTED"
+        : result.outcome === "AWAITING_SOURCE"
+          ? "AWAITING_SOURCE"
+          : "OPEN";
 
   const [recon] = await db
     .insert(tables.reconciliations)
     .values({
       periodId,
-      meterMwh: meterMwh != null ? String(meterMwh) : null,
-      inverterMwh: inverterMwh != null ? String(inverterMwh) : null,
-      utilityMwh: utilityMwh != null ? String(utilityMwh) : null,
-      adoptedMwh: result.adoptedMwh != null ? String(result.adoptedMwh) : null,
-      adoptedSource:
-        result.adoptedSource === "METER" || meterMwh != null ? "MANUAL" : "MANUAL",
-      tolerancePct: String(tolerancePct),
-      maxVariancePct: result.maxVariancePct != null ? String(result.maxVariancePct) : null,
+      generationMwh: generationMwh != null ? String(generationMwh) : null,
+      exportMwh: exportMwh != null ? String(exportMwh) : null,
+      selfConsumedMwh: result.selfConsumedMwh != null ? String(result.selfConsumedMwh) : null,
+      flagged: result.flagged,
+      flagReasons: result.flagReasons,
+      // legacy columns kept in sync for older views/exports
+      meterMwh: exportMwh != null ? String(exportMwh) : null,
+      inverterMwh: generationMwh != null ? String(generationMwh) : null,
+      utilityMwh: null,
+      adoptedMwh:
+        outcome === "RECONCILED"
+          ? String(site.certifies === "GENERATION" ? (generationMwh ?? exportMwh) : exportMwh)
+          : null,
+      adoptedSource: adoptedSource ?? null,
+      tolerancePct: "0",
+      maxVariancePct: null,
       outcome,
-      detail: { ...result, inputReadingIds },
+      detail: { ...result, adoptedSource, modelledYieldMwh, band, inputReadingIds },
       runBy: user.id,
     })
     .returning();
@@ -101,39 +165,43 @@ export async function runReconciliationAction(formData: FormData): Promise<void>
     .update(tables.periods)
     .set({
       status: outcome,
-      sourcesPresent: result.sourcesPresent,
+      sourcesPresent: [...exportBySource.keys(), ...(generationMwh != null ? ["INVERTER/GENERATION"] : [])],
       supervisorApprovalBy: supervisorApproved ? user.id : null,
     })
     .where(eq(tables.periods.id, periodId));
 
-  // Attribute lifecycle: create on first reconciliation contact, then move.
+  // Attribute lifecycle. Guard (S3B-5): provisional figures can never enter
+  // the ledger — only a confirmed record-of-account source creates one.
+  const certifiedMwh =
+    site.certifies === "GENERATION" ? generationMwh : exportMwh;
+  const ledgerGate = canEnterLedger(adoptedSource);
+
   let [attr] = await db
     .select()
     .from(tables.attributes)
     .where(and(eq(tables.attributes.siteId, site.id), eq(tables.attributes.periodId, periodId)));
 
-  if (!attr && result.adoptedMwh != null) {
-    // Inherits is_sandbox from the site at creation (S1-4). The
-    // one_attribute_per_period constraint makes a duplicate impossible.
+  if (!attr && outcome === "RECONCILED" && certifiedMwh != null && ledgerGate.ok) {
     [attr] = await db
       .insert(tables.attributes)
       .values({
         siteId: site.id,
         periodId,
-        mwh: String(result.adoptedMwh),
+        mwh: String(certifiedMwh),
         isSandbox: site.isSandbox,
       })
       .returning();
   }
 
   if (attr) {
-    const toStatus = outcome === "RECONCILED" ? "RECONCILED" : outcome === "DISPUTED" ? "DISPUTED" : attr.status;
+    const toStatus =
+      outcome === "RECONCILED" ? "RECONCILED" : outcome === "DISPUTED" ? "DISPUTED" : attr.status;
     if (toStatus !== attr.status) {
       await db
         .update(tables.attributes)
         .set({
           status: toStatus,
-          mwh: result.adoptedMwh != null ? String(result.adoptedMwh) : attr.mwh,
+          mwh: certifiedMwh != null && ledgerGate.ok ? String(certifiedMwh) : attr.mwh,
         })
         .where(eq(tables.attributes.id, attr.id));
       await db.insert(tables.attributeTransitions).values({
@@ -151,13 +219,19 @@ export async function runReconciliationAction(formData: FormData): Promise<void>
     action: "reconciliation.run",
     entityType: "period",
     entityId: periodId,
-    after: { reconciliationId: recon!.id, outcome, maxVariancePct: result.maxVariancePct },
+    after: {
+      reconciliationId: recon!.id,
+      outcome,
+      flagged: result.flagged,
+      flagReasons: result.flagReasons,
+      adoptedSource,
+    },
   });
 
   redirect(`/reconciliation?period=${periodId}`);
 }
 
-/** S6-2: resolve a disputed period with a controlled outcome + mandatory note. */
+/** S6-3R: resolve a disputed/flagged period with a controlled outcome + note. */
 export async function resolveDisputeAction(formData: FormData): Promise<void> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -165,11 +239,15 @@ export async function resolveDisputeAction(formData: FormData): Promise<void> {
   const schema = z.object({
     reconciliationId: z.string().uuid(),
     outcome: z.enum([
+      "BILLING_LAG",
+      "ENA_ESTIMATED_READING",
+      "INVERTER_OFFLINE",
+      "CURTAILMENT",
+      "SITE_LOAD_CHANGE",
+      "EXTRACTION_ERROR",
       "INSTRUMENT_FAULT",
       "COMMS_GAP",
-      "CURTAILMENT",
       "METER_REPLACEMENT",
-      "BILLING_LAG",
       "DATA_ERROR",
       "ACCEPTED_WITH_VARIANCE",
     ]),

@@ -24,10 +24,10 @@ export default async function BulkImportPage({
           .where(eq(tables.sites.isSandbox, true))
           .orderBy(asc(tables.sites.name));
 
-  const template = `month,meter_mwh,inverter_mwh,utility_mwh
-2026-01,0.70,0.71,0.69
-2026-02,0.85,0.86,0.84
-2026-03,1.15,1.16,1.14`;
+  const template = `month,export_mwh,generation_mwh
+2026-01,0.45,0.70
+2026-02,0.55,0.85
+2026-03,0.75,1.15`;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-4">
